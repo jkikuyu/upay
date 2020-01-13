@@ -7,7 +7,7 @@ use \Dotenv\Dotenv as Dotenv;
 /**
 * author @jude@ipayafrica.com
 * date: 12/11/2019
-* The unionpay class is specific Union Pay credit cards. The class receives a request in json format. 
+* The unionpay class is specific to Union Pay credit cards. The class receives a request in json format. 
 * A determination is made as to the payment type. Validations are carried out. Data is encrypted using
 * private and public keys and forwarded to the payment processor. On receipt of response. The public key and
 * signature are validated. A successful response means that the request was successful. The payment types
