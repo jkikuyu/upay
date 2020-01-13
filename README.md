@@ -20,7 +20,7 @@ The following configuration is required prior to making request and is set in th
 
 | Attribute | Value |Comments|
 | --------- | --------- | --------- |
-| UPOP.MERCHANTID | &#8203;000000070000017 |Merchant identifier assigned to Company |
+| UPOP.MERCHANTID | {000000070000017} |Merchant identifier assigned to Company |
 | UPOP.VERSION | 5.1.0 |  Version of used by UP gateway  |
 | UPOP.ENCODING | UTF-8 | The character code applied to all string values|
 | UPOP.SIGNMETHOD | 01 | Signature method used during encryption|
