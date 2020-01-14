@@ -1,6 +1,13 @@
 {
     "require": {
+<<<<<<< HEAD
         "monolog/monolog": "^1.25",
         "vlucas/phpdotenv": "^4.1"
+=======
+        "phpseclib/phpseclib": "^2.0",
+        "vlucas/phpdotenv": "^4.1.0",
+        "monolog/monolog": "^1.25",
+        "phpoption/phpoption": "^1.7"
+>>>>>>> a3b20a2f6b7cafa937c72948cb9cfe7a06a538a7
     }
 }
