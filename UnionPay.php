@@ -226,6 +226,7 @@ class UnionPay{
 			$this->log->error($e->getMessage());
 		}
 	return $signature;
+		
 	}
 
 
@@ -233,6 +234,8 @@ class UnionPay{
 		parent::makeRequest($requestData);
 	}
     public function curlPost(array $data, $url,$port){
+		echo "url:". $url;
+
 		$headers = ["Content-type:application/x-www-form-urlencoded;charset=UTF-8"];
 		$request_time = new \DateTime();
 		$strData = "";
@@ -384,9 +387,11 @@ class UnionPay{
 			$intermediateCerts=[$this->middleCertPath, $this->rootCertPath];
 			try{
 				$success = openssl_x509_checkpurpose($pubCertStr,X509_PURPOSE_ANY,$intermediateCerts);
-				if (!$success)
+				//echo "validation:".$success;
+				if (!$success){
 					$isValid="False";
 					throw new \Exception("Certificate validation failed");
+				}
 			}
 				
 			catch(Exception $e){
@@ -890,11 +895,10 @@ try{
 			// $sorted = ksort($merged_final);
 			//var_dump($merged_final);
 			$port = $unionpay->port;
-
 			//$data = $classobj->initiateRequest($merged_final,$url,$port);
-			print_r($url);
 			$data = $unionpay->initiateRequest($merged_final,$url,$port);
-			if($data.strlen($data) < 1){
+			
+			if(strlen($data) < 1){
 				throw new \Exception('Error in request, contact system administrator');
 			}
 			//echo "response:". $data. "<br/>";

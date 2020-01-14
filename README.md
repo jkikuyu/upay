@@ -31,6 +31,8 @@ The following configuration is required prior to making request and is set in th
 | UPOP.CERTID| 69629715588 | The certificate ID that is used. It is preferable to have this as an environment variable |
 | UPOP.PAYTIMEOUT | 3 | The time out period for pre-authorization |
 | UPOP.SMSCODE | 111111 | SMS code is used in combination with account number in the absence of CVV, card expiry and phone number  |
+| UPOP.BACKTRANSURL | acpsdk.backTransUrl=https://gateway.test.95516.com/gateway/api/backTransReq.do | Transaction request URL |
+
 | UPOP.FRONTURL | https://ipay-staging.ipayafrica.com/upop/unionpaycbk/frontRcvResponse.php | The callback URL that receives the notice from UnionPay's foreground | 
 | UPOP.BACKURL | https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php | the address that background can receive the notice from UnionPay's foreground, and extranet access right should be granted.
 | UPOP.SIGNCERT.PATH|certs/test/acp_test_sign.pfx| the private key for request before dispatch |
