@@ -128,7 +128,7 @@ The pre authorization request is shown below
     "phoneno": "13552535506"
 }
 ```
-# POST Pre-Authorization Cancel
+# POST Pre-Authorization Cancellation
 
 The pre authorization cancellation request is used to reverse the Pre authorization. The amount is fully or partially reversed as follows as follows
 ```json
@@ -148,6 +148,17 @@ The pre authorization cancellation request is used to reverse the Pre authorizat
     "txnAmt": 1590,
     "txnTime": "20200116142021",
     "serialno": "212001161419022512768"
+}
+```
+# POST Pre-Authorization Complete Cancellation
+The pre - authorization cancellation is used to reverse a pre-authorization complete transaction. The amount is fully or partially reversed
+```json
+{
+    "type": 7,
+    "orderId": "IPAY2020099",
+    "txnAmt": 1590,
+    "txnTime": "20200116142526",
+    "serialno": "212001161420212126498"
 }
 ```
 

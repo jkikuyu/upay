@@ -743,7 +743,7 @@ try{
 					$txntype =getenv('UPOP.PUR.CANCEL.TXNTYPE');
 					$txnSubType=getenv('UPOP.GLOBAL.TYPE');
 
-					$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
+					$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt,"currencyCode"=>$json->currency];
 					$purchaseContent = $unionpay->getPurchaseContent();
 					$combined = array_merge($purchaseContent,$customerData);
 					array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
