@@ -19,9 +19,9 @@ composer install
 The following configuration is required prior to making request and is set in the .ENV file
 
 | Attribute | Value |Comments|
-| --------- | --------- | --------- |
-| UPOP.MERCHANTID | `000000070000017` |Merchant identifier assigned to Company |
-| UPOP.VERSION | 5.1.0 |  Version of used by UP gateway  |
+| --------- | ------ | ---------|
+| UPOP.MERCHANTID | `000000070000017` |Merchant identifier assigned to Company|
+| UPOP.VERSION | 5.1.0 |  Version of used by UP gateway|
 | UPOP.ENCODING | UTF-8 | The character code applied to all string values|
 | UPOP.SIGNMETHOD | 01 | Signature method used during encryption|
 | UPOP.BIZTYPE | 000000 | The Type of Business 000301: Merchant-hosted, 000000: ExpressPay, 000902: Token payment, 001001: Mail Order Telephone Order  000201: SecurePay, 000701: Card-Present transaction,000802: AM remote payment 000902: Token payment, 001001: MOTO |
@@ -30,9 +30,8 @@ The following configuration is required prior to making request and is set in th
 | UPOP.CURRENCYCODE | 156 |[ Currency Codes ]( https://www.iban.com/currency-codes)
 | UPOP.CERTID| `69629715588` | The certificate ID that is used. It is preferable to have this as an environment variable |
 | UPOP.PAYTIMEOUT | 3 | The time out period for pre-authorization |
-| UPOP.SMSCODE | 111111 | SMS code is used in combination with account number in the absence of CVV, card expiry and phone number  |
+| UPOP.SMSCODE | 111111 | SMS code is used in combination with account number in the absence of CVV, card expiry and phone number |
 | UPOP.BACKTRANSURL | acpsdk.backTransUrl=https://gateway.test.95516.com/gateway/api/backTransReq.do | Transaction request URL |
-
 | UPOP.FRONTURL | https://ipay-staging.ipayafrica.com/upop/unionpaycbk/frontRcvResponse.php | The callback URL that receives the notice from UnionPay's foreground | 
 | UPOP.BACKURL | https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php | the address that background can receive the notice from UnionPay's foreground, and extranet access right should be granted.
 | UPOP.FRONTURL | https\://ipay-staging.ipayafrica.com/upop/unionpaycbk/frontRcvResponse.php | The callback URL that receives the notice from UnionPay's foreground | 
