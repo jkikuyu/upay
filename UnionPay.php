@@ -148,7 +148,10 @@ class UnionPay{
 			
 		}
 		else
-			throw new \Exception("Error: Unable to read file");
+			$this->log->error("unable to read file");
+
+			
+			throw new \Exception("Error, contact system administrator");
 		}
 		catch(\Exception $e){
 			$this->log->error($e->getMessage());
@@ -169,16 +172,16 @@ class UnionPay{
 							$success=true;
 						}
 						else{
-							//$this->log->info("unable to read file");
+							$this->log->error("unable to read file");
 
-							throw new \Exception("Error: Unable to read file");
+							throw new \Exception("Error, contact system administrator");
 
 						}
 
 				}
 				else{
 					$this->log->error("unable to read file");
-					throw new \Exception("Unable to read the cert file\n");
+					throw new \Exception("Error, contact system administrator");
 				}
 			}
 			catch(\Exception $e){
@@ -219,7 +222,7 @@ class UnionPay{
 			}
 			else{
 				$this->log->error("unable to read cert file");
-				throw new \Exception("Error Unable to read the cert file\n");
+				throw new \Exception("Error, contact system administrator");
 			}
 		}
 		catch(\Exception $e){
@@ -234,7 +237,7 @@ class UnionPay{
 		parent::makeRequest($requestData);
 	}
     public function curlPost(array $data, $url,$port){
-		echo "url:". $url;
+		//echo "url:". $url;
 
 		$headers = ["Content-type:application/x-www-form-urlencoded;charset=UTF-8"];
 		$request_time = new \DateTime();
@@ -242,7 +245,8 @@ class UnionPay{
 		$output="";
 		try{
 			if(!is_string($url)){
-				throw new \InvalidArgumentException('URL must be a string');
+				$this->log->error('URL must be a string!');
+				throw new \InvalidArgumentException('Error, contact system administrator');
 			}
 			else{
 				foreach($data as $key => $value) {
@@ -560,7 +564,6 @@ class UnionPay{
 	*/
 		 $content = array(
 		"channelType"=>$this->channelType,
-		"currencyCode"=>$this->currencyCode,
 		"backUrl"=> $this->backUrl
 		 );
 			 
@@ -726,7 +729,7 @@ try{
                                 $customerInfo = ["smsCode"=>  $unionpay->smsCode,"encryptedInfo"=>$encryptedInfo];
                             }
                         $encryptedCustomerInfo =  $unionpay->encryptCustomerInfo($customerInfo,$json->card);
-                        $customerData = ["accNo"=>$encryptedCard, "encryptCertId"=>$encryptedCertId,"customerInfo"=>$encryptedCustomerInfo,"txnAmt"=> $json->txnAmt];
+                        $customerData = ["accNo"=>$encryptedCard, "encryptCertId"=>$encryptedCertId,"customerInfo"=>$encryptedCustomerInfo,"txnAmt"=> $json->txnAmt,"currencyCode"=$json->currency];
                         $purchaseContent = $unionpay->getPurchaseContent();
                         $combined = array_merge($purchaseContent,$customerData);
                         // add additional fields for validation 
@@ -897,15 +900,16 @@ try{
 			$port = $unionpay->port;
 			//$data = $classobj->initiateRequest($merged_final,$url,$port);
 			$data = $unionpay->initiateRequest($merged_final,$url,$port);
-			
+			print_r($data);
 			if(strlen($data) < 1){
-				throw new \Exception('Error in request, contact system administrator');
+				throw new \Exception('Error, contact system administrator');
 			}
 			//echo "response:". $data. "<br/>";
 			$ares = explode("&",$data);
 			//Svar_dump($ares);
-			$resp="";
+			//$resp="";
 			
+
 			foreach( $ares as $item){
 				$temp = explode("=",$item); //accNo will lose the == and this should be returned
 				$key=$temp[0];
@@ -918,6 +922,7 @@ try{
 				$resp[$key] =  $value;
 
 			}
+
 
 			foreach($resp as $key => $value ){
 			   if (  $key==='signPubKeyCert'){
@@ -947,7 +952,7 @@ try{
 					else{
 						echo '{
 								"status":"400",
-								"description":"failed",
+								"description":"Error, contact system administrator",
 								"respCode":"'."99".'"
 
 							}';

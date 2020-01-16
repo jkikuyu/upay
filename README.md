@@ -36,8 +36,8 @@ The following configuration is required prior to making request and is set in th
 | UPOP.FRONTURL | https://ipay-staging.ipayafrica.com/upop/unionpaycbk/frontRcvResponse.php | The callback URL that receives the notice from UnionPay's foreground | 
 | UPOP.BACKURL | https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php | the address that background can receive the notice from UnionPay's foreground, and extranet access right should be granted.
 | UPOP.FRONTURL | https\://ipay-staging.ipayafrica.com/upop/unionpaycbk/frontRcvResponse.php | The callback URL that receives the notice from UnionPay's foreground | 
-| UPOP.BACKURL | https\://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php | the address that background can receive the notice from UnionPay's foreground, and extranet access right should be granted.
->>>>>>> a3b20a2f6b7cafa937c72948cb9cfe7a06a538a7
+| UPOP.BACKTRANSURL | Https://gateway.test.95516.com/gateway/api/backTransReq.do | the address that is used to make transaction requests. |
+| UPOP.SINGLEQUERYURL | https://gateway.test.95516.com/gateway/api/queryTrans.do | the address that is used to query transactions | 
 | UPOP.SIGNCERT.PATH|certs/test/acp_test_sign.pfx| the private key for request before dispatch |
 | UPOP.SIGNCERT.PWD|000000| The password required to use private key |
 | UPOP.SIGNCERT.TYPE|PKCS12| The public key cryptography standard used |
@@ -61,33 +61,95 @@ unionpay/certs
 
 ** Content-Type :** application/json
 
-# POST Purchase
-A purchase request 
-#### Request
-```json
-{
-    "type": "1",
-    "card": "6250947000000014",
-    "orderId": "IPAY2020083",
-    "txnAmt": 7000,
-    "txnTime": "20200107131402",
-    "cvn2": "123",
-    "expiry": "3012",
-    "phoneno": "13552535506"
-}
-```
-
+##### Attributes and their descriptions
 | attribute | Description |Type | Requirement |
 | --------------- | --------------- | --------------- |
 | type| Transaction Type | Numeric | M |
 | card| Credit card number | String | M |
 | orderId| Order id that is unique | String |  M |
 | txnAmt| Transaction amount in cents| Numeric |  M |
+|serialno| The queryId retrieved from the backend response | M | 
 | txnTime| Time when transaction is taking place | String | M |
 | smsCode| SMS code sent to customer phone | String | C |
 | cvn | card verification number | String | C |
 | expiry | Card expiry YYMM | String | C |
 | phoneno |Customer phone number used  | String | C |
+
+# POST Purchase
+A purchase request 
+#### Request
+```json
+{
+    "type": 1,
+    "card": "6250947000000014",
+    "orderId": "IPAY2020083",
+    "txnAmt": 7000,
+    "txnTime": "20200107131402",
+    "cvn": "123",
+    "expiry": "3012",
+    "phoneno": "13552535506"
+}
+```
+
+
+# POST Query 
+The query request is shown below
+```json
+{
+    "type": 9,
+    "orderId": "IPAY2020087",
+    "txnTime": "20200116120202"
+}
+```
+
+# POST Purchase Cancellation
+A purchase cancellation request is used to reverse the purchase transaction. The amount is fully or partially reversed as follows
+```json
+{
+    "type": 2,
+    "orderId": "IPAY2019094",
+    "txnAmt": 1000,
+    "txnTime": "20200116140542",
+    "serialno": "212001161405422401518"
+}
+```
+
+# POST Pre-Authorization
+The pre authorization request is shown below
+```json
+{
+    "type": 4,
+    "card": "8171999927660000",
+    "orderId": "IPAY2020092",
+    "txnAmt": 1590,
+    "txnTime": "20200116141702",
+    "cvn": "123",
+    "expiry": "3012",
+    "phoneno": "13552535506"
+}
+```
+# POST Pre-Authorization Cancel
+
+The pre authorization cancellation request is used to reverse the Pre authorization. The amount is fully or partially reversed as follows as follows
+```json
+{
+    "type": 5,
+    "orderId": "IPAY2020095",
+    "txnAmt": 1590,
+    "txnTime": "20200116140642",
+    "serialno": "042001161417022386518"
+}
+```
+# POST Pre-Authorization Complete
+```json
+{
+    "type": 6,
+    "orderId": "IPAY2020098",
+    "txnAmt": 1590,
+    "txnTime": "20200116142021",
+    "serialno": "212001161419022512768"
+}
+```
 
 ### Transaction Types
 The following types are used to determine the transaction processing operation to be carried out
@@ -106,7 +168,18 @@ The following types are used to determine the transaction processing operation t
 
 #### Response (application/json)
 
-A json response is returned as follows
+#### Attributes and their descriptions
+ 
+| attribute | Description |
+| --------------- | --------------- | 
+| status| Response code  | 
+| description| Response description | 
+| queryId| Query idenfier used to search transaction |  
+| respCode| Specific union pay response code  | 
+#### Successful Responses
+
+A json response is returned to the front end as follows
+
 
 ```json
 {
@@ -117,16 +190,46 @@ A json response is returned as follows
 >
 }
 ```
-| attribute | Description |
-| --------------- | --------------- | 
-| status| Response code  | 
-| description| Response description | 
-| queryId| Query idenfier used to search transaction |  
-| respCode| Specific union pay response code  | 
+#### Failed responses
+```
+{
+"status":"200",
+"description":"OK",
+"queryId":"042001161417022386518",
+"respCode":"35"
+
+}
+````
 
 
+Also, another response is forwarded to the callback URL provided when making a transaction request. The response is shown below
+```
+{
+"accNo":"r8RCASmopSEvqg5EtLXb2jcfscfp26Nkxboc4Fd7ATUQzSQqqF3j3RX3IAUvlonfuJKIoYI5VG8M5qL0p4nfESts9NEncZBGi47KVqnnJ+Y8jyyaGkexFrjFM/4F5sVdTdQ3NJUDlk9scxbP8KRSPmkLEZyQwobRIl04BvWplleuTpk9RQAcJCmdqiGWoEUuj2KsrEs4N2Evvsxd6Nf+tNerzG8iI/yL4FcJ25QAV6M6ho9nlicekbGhf5MQ6hBD1HzL6Zr5/yPZjQw7b4X7mXJTprw7dUlL141hskFuaXQjeGndxGM3wqtaB7nZwca4t0pgMYUOMplFDAIhwNMMnQ==","accessType":"0","bizType":"000000","currencyCode":"156","encoding":"UTF-8","exchangeDate":"0116","exchangeRate":"71455830","merId":"000000070000017","orderId":"IPAY2020093","payCardType":"02","queryId":"212001161405422401518","respCode":"73","respMsg":"支付卡已超过有效期[1000054]","settleAmt":"146","settleCurrencyCode":"840","settleDate":"0116","signMethod":"01","signPubKeyCert":"-----BEGIN CERTIFICATE-----
+MIIEQzCCAyugAwIBAgIFEBJJZVgwDQYJKoZIhvcNAQEFBQAwWDELMAkGA1UEBhMC
+Q04xMDAuBgNVBAoTJ0NoaW5hIEZpbmFuY2lhbCBDZXJ0aWZpY2F0aW9uIEF1dGhv
+cml0eTEXMBUGA1UEAxMOQ0ZDQSBURVNUIE9DQTEwHhcNMTcxMTAxMDcyNDA4WhcN
+MjAxMTAxMDcyNDA4WjB3MQswCQYDVQQGEwJjbjESMBAGA1UEChMJQ0ZDQSBPQ0Ex
+MQ4wDAYDVQQLEwVDVVBSQTEUMBIGA1UECxMLRW50ZXJwcmlzZXMxLjAsBgNVBAMU
+JTA0MUBaMjAxNy0xMS0xQDAwMDQwMDAwOlNJR05AMDAwMDAwMDEwggEiMA0GCSqG
+SIb3DQEBAQUAA4IBDwAwggEKAoIBAQDDIWO6AESrg+34HgbU9mSpgef0sl6avr1d
+bD/IjjZYM63SoQi3CZHZUyoyzBKodRzowJrwXmd+hCmdcIfavdvfwi6x+ptJNp9d
+EtpfEAnJk+4quriQFj1dNiv6uP8ARgn07UMhgdYB7D8aA1j77Yk1ROx7+LFeo7rZ
+Ddde2U1opPxjIqOPqiPno78JMXpFn7LiGPXu75bwY2rYIGEEImnypgiYuW1vo9UO
+G47NMWTnsIdy68FquPSw5FKp5foL825GNX3oJSZui8d2UDkMLBasf06Jz0JKz5AV
+blaI+s24/iCfo8r+6WaCs8e6BDkaijJkR/bvRCQeQpbX3V8WoTLVAgMBAAGjgfQw
+gfEwHwYDVR0jBBgwFoAUz3CdYeudfC6498sCQPcJnf4zdIAwSAYDVR0gBEEwPzA9
+BghggRyG7yoBATAxMC8GCCsGAQUFBwIBFiNodHRwOi8vd3d3LmNmY2EuY29tLmNu
+L3VzL3VzLTE0Lmh0bTA5BgNVHR8EMjAwMC6gLKAqhihodHRwOi8vdWNybC5jZmNh
+LmNvbS5jbi9SU0EvY3JsMjQ4NzIuY3JsMAsGA1UdDwQEAwID6DAdBgNVHQ4EFgQU
+mQQLyuqYjES7qKO+zOkzEbvdFwgwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUF
+BwMEMA0GCSqGSIb3DQEBBQUAA4IBAQAujhBuOcuxA+VzoUH84uoFt5aaBM3vGlpW
+KVMz6BUsLbIpp1ho5h+LaMnxMs6jdXXDh/du8X5SKMaIddiLw7ujZy1LibKy2jYi
+YYfs3tbZ0ffCKQtv78vCgC+IxUUurALY4w58fRLLdu8u8p9jyRFHsQEwSq+W5+bP
+MTh2w7cDd9h+6KoCN6AMI1Ly7MxRIhCbNBL9bzaxF9B5GK86ARY7ixkuDCEl4XCF
+JGxeoye9R46NqZ6AA/k97mJun//gmUjStmb9PUXA59fR5suAB5o/5lBySZ8UXkrI
+pp/iLT8vIl1hNgLh0Ghs7DBSx99I+S3VuUzjHNxL6fGRhlix7Rb8
+-----END CERTIFICATE-----","traceNo":"240151","traceTime":"0116140542","txnAmt":"1000","txnSubType":"01","txnTime":"20200116140542","txnType":"01","version":"5.1.0","signature":"HGFpQEzXkJLRhE1xnq9bQYUu1LvBKPEdFA74TmfMdSLMSdgB55ZhAxVu2dp46a/hEgFZrvcFaZ9eyXndFeD0kCdsspl2405NzFgU0XnDEUxj627tHyQBKmJaon8L3hJ9Wbi8ND7Mbc+mIEhxa+1+Rm/nE+Bm5a+IZZ2oy3bxloHOqrjcuBIpM73rC4gmNdBo+yxj8ZkcYTcKY6VsSyYj5XDO2IHCZtGjHBgcHSL0hLIxHmFxal6Hhjvk3jsiHTb5oV/zN2W7fuxzvy9Lr9HGbUkYChVU83Vyh5W2LtR7bph05bbjKq5HwHJd87mRDfxKfyPXTYQFf1QC+/+PTXRzmw=="
+} 
+```
 
-# POST Preauth
-
-
-#### Request (application/json)
