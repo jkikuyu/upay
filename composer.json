@@ -1,6 +1,14 @@
-{
+{    
+ "repositories": [
+        {
+            "url": "https://jkikuyu@bitbucket.org/ipayafrica/unionpay.git",
+            "type": "git"
+        }
+    ]
+,
     "require": {
         "monolog/monolog": "^1.25",
-        "vlucas/phpdotenv": "^4.1"
+        "vlucas/phpdotenv": "^4.1",
+        "unionpay/unionpay":"^1.0"
     }
 }
