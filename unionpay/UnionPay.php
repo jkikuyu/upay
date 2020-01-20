@@ -30,30 +30,17 @@ class UnionPay{
 	/* variables required unionpay request creation*/
 	
 	
-	//URLS
-	//const BACKURL="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php";
-	const BACKTRANSURL = "https://gateway.test.95516.com/gateway/api/backTransReq.do";
-	const SINGLEQUERYURL="https://gateway.test.95516.com/gateway/api/queryTrans.do";
 	//certificates
 	const SIGNCERTPATH="certs/test/acp_test_sign.pfx";
 	const ENCRYPTCERTPATH="certs/test/acp_test_enc.cer";
 	const ROOTCERTPATH="certs/test/acp_test_root.cer";
 	const MIDDLECERTPATH="certs/test/acp_test_middle.cer";
-	
-/*
-				//
-				const VERSION="5.1.0";
-				const SIGNCERTTYPE="PKCS12";
-				const ENCODING="UTF-8";
-				const SIGNMETHOD="01";
-				const BIZTYPE="000000";
-				const CHANNELTYPE="08";
-				const ACCESSTYPE="0";
-				const CHANNELTYPE="08";
-*/
+	//URLS
+	//const BACKURL="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php";
+	const BACKTRANSURL = "https://gateway.test.95516.com/gateway/api/backTransReq.do";
+	const SINGLEQUERYURL="https://gateway.test.95516.com/gateway/api/queryTrans.do";
+	private $backUrl="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php";
 
-
-	
 	private $version="5.1.0";
 	private $encoding ="UTF-8";
 	private $signMethod="01";
@@ -61,7 +48,8 @@ class UnionPay{
 	private $accessType ="0";
 	private $channelType ="08";
 	private $merId="000000070000017";
-	private $backUrl="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php";
+	private $port=443;
+    protected $signCertType= "PKCS12";
 
 	/*identifier of certificate used for encryption of data */
     private $certId;
@@ -82,21 +70,20 @@ class UnionPay{
 	
 	
 	 /** Path of signed certificate. */
-    protected $signCertPath;
+    //protected $signCertPath;
     /** Password of signed certificate. */
     protected $signCertPwd;
     /** Type of signed certificate. */
-    protected $signCertType;
     /** Path of encrypted public key certificate. */
     //public $encryptCertPath;
     /** Authenticate the catalog of signed public key certificates. */
-    protected $validateCertDir;
+    //protected $validateCertDir;
     /** Read the catalog of specified signed certificates according to client codes. */
-    protected $signCertDir;
+    //protected $signCertDir;
     /** Security key (used in calculation of SHA256 and SM3) */
-    protected $secureKey;
+    //protected $secureKey;
 	/** algorithm for signing data**/
-	protected $alg;
+	//protected $alg;
     
 	private static $keystore = null;
 	/** Encryption public key for magnetic tracks */
@@ -148,7 +135,6 @@ class UnionPay{
 		$this->encryptCert=getenv('UPOP.ENCRYPTCERT.PATH');
         $this->signCertPath=getenv('UPOP.SIGNCERT.PATH');
         $this->signCertType=getenv('UPOP.SIGNCERT.TYPE');
-        $this->signCertPwd=getenv('UPOP.SIGNCERT.PWD');
 
         $this->middleCertPath=getenv('UPOP.MIDDLECERT.PATH');
         $this->rootCertPath=getenv('UPOP.ROOTCERT.PATH');
@@ -160,15 +146,17 @@ class UnionPay{
 		// load the dotenv file
 		$dotenv = Dotenv::createImmutable(__DIR__);
 		$dotenv->load();
+		$this->getLogFile("UPOP");
 		$this->smsCode=getenv('UPOP.SMSCODE');
 		$this->certId = getenv('UPOP.CERTID');
+        $this->signCertPwd=getenv('UPOP.SIGNCERT.PWD');
 
 
 
 	}
 	private function getSignature($merged_data=null){
 		$success = self::initCert();
-		$signData="";
+		$signedData="";
 		try{
 		if ($success){
 			$strData = self::convertToString($merged_data);
@@ -191,11 +179,9 @@ class UnionPay{
 	private function initCert(){
 		$success =false;
 
-		
         if ($this->signCertType =='PKCS12'){
 			try{
-				if ($cert_store = file_get_contents($this->signCertPath)) {
-
+				if ($cert_store = file_get_contents(self::SIGNCERTPATH)) {
 
 						if (openssl_pkcs12_read($cert_store, self::$keystore, $this->signCertPwd)){
 						   $this->log->info("Signed Certicate loaded Successfully");
@@ -285,7 +271,6 @@ class UnionPay{
 
 				}
 				$strData = substr($strData,0,strlen($strData)-1);
-				$this->log->error("resquest data:". $strData);
 
 
 
@@ -415,10 +400,9 @@ class UnionPay{
 		else{
 			//self::initMiddleCert();
 			//self::initRootCert();
-			$intermediateCerts=[$this->middleCertPath, $this->rootCertPath];
+			$intermediateCerts=[self::MIDDLECERTPATH, self::ROOTCERTPATH];
 			try{
 				$success = openssl_x509_checkpurpose($pubCertStr,X509_PURPOSE_ANY,$intermediateCerts);
-				//echo "validation:".$success;
 				if (!$success){
 					$isValid="False";
 					throw new \Exception("Certificate validation failed");
@@ -444,11 +428,8 @@ class UnionPay{
 		//print_r($ares);
 		$pubKeyStr=  $ares["signPubKeyCert"];
 		$strData = self::convertToString($ares);
-		print_r($strData);
 		$strDataEnc = self::generateHash($strData);
-		//echo "string to verify:". $strDataEnc ."\n";
 		$decodedStr = self::decodeSgn($signature);
-		//echo "decoded signature:". $decodedStr ."<br />";
 		$pubkey= openssl_x509_read($pubKeyStr);
 		$alg = "sha256WithRSAEncryption";
 		$success = false;
@@ -695,20 +676,21 @@ class UnionPay{
 					$class = null;
 					// fields required are for de
 					$requiredFlds = $this->getRequiredFlds();
-					$url = $this->backTransUrl;
+					$url = self::BACKTRANSURL;
 					switch ($json->type){
 						case self::PURCHASE:
 							// purchase
 							//$var = 'Purchase';
-							$txntype=01;
-							$txnSubType=01;
+							$txntype="01";
+							$txnSubType="01";
 							$encryptedCertId = $this->encryptedCertId();
 							$combined=[];
 							$requiredUserData = ['card','cvn','expiry','phoneno','txnAmt','txnTime'];
 							$this->validateRequest($json,$requiredUserData);
 
-							if($json->card===""){	
-								throw new \Exception("Please provide card details");
+							if($json->card===""){
+								$this->log->error("Please provide card details");
+								throw new \Exception("Error, contact system administrator");
 
 							}
 							else{
@@ -718,7 +700,9 @@ class UnionPay{
 										$this->validateRequest($json,$requiredUserData);
 
 										if ($json->smsCode===""){
-											throw new \Exception("Please provide card details");
+											$this->log->error("Please provide card details");
+
+											throw new \Exception("Error, contact system administrator");
 
 										}
 										else{
@@ -746,8 +730,8 @@ class UnionPay{
 							//$var = 'PurchaseCancel';
 							//$url = $this->backTransUrl;
 
-							$txntype =31;
-							$txnSubType=00;
+							$txntype ="31";
+							$txnSubType="00";
 
 							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt,"currencyCode"=>$json->currency];
 							$purchaseContent = $this->getPurchaseContent();
@@ -760,8 +744,8 @@ class UnionPay{
 							// refund
 							//$url = $this->backTransUrl;
 
-							$txntype = 04;
-							$txnSubType = 00;
+							$txntype = "04";
+							$txnSubType = "00";
 							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
 							$purchaseContent = $this->getRefundContent();
 							$combined = array_merge($purchaseContent,$customerData);
@@ -773,10 +757,10 @@ class UnionPay{
 							//PreAuth
 							//$url = $this->backTransUrl;
 
-							$txntype=02;
-							$txnSubType=01;
+							$txntype="02";
+							$txnSubType="01";
 
-							$duration = 3;
+							$duration = "3";
 
 							$time = new \DateTime(date("Y-m-d H:i:s"));
 							$timezone = new \DateTimeZone('Africa/Nairobi');
@@ -816,8 +800,8 @@ class UnionPay{
 						case self::CANCELPREAUTH:
 							//$url = $this->backTransUrl;
 
-							$txntype=32;
-							$txnSubType=00;
+							$txntype="32";
+							$txnSubType="00";
 
 							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
 							$purchaseContent = $this->getPurchaseContent();
@@ -829,8 +813,8 @@ class UnionPay{
 							//PreAuth Complete
 							//$url = $this->backTransUrl;
 
-							$txntype=03;
-							$txnSubType=00;
+							$txntype="03";
+							$txnSubType="00";
 
 							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
 							$purchaseContent = $this->getPurchaseContent();
@@ -843,8 +827,8 @@ class UnionPay{
 							//PreAuth Complete Cancel
 							//$url = $this->backTransUrl;
 
-							$txntype=33;
-							$txnSubType=00;
+							$txntype="33";
+							$txnSubType="00";
 
 							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
 							$purchaseContent = $this->getPurchaseContent();
@@ -856,17 +840,17 @@ class UnionPay{
 						case self::RECURRING:
 							//$url = $this->backTransUrl;
 
-							$txntype=11;
-							$txnSubType=01;
+							$txntype="11";
+							$txnSubType="01";
 
 							//Recurring
 							break;
 						case self::QUERY:
 							//query
-							$txntype=00;
-							$txnSubType=00;
+							$txntype="00";
+							$txnSubType="00";
 							//$custInfo = new CustomerInfo($txntype, $txnSubType);
-							$url = $this->queryUrl;
+							$url = self::SINGLEQUERYURL;
 
 							$combined = ["certType"=>"01"];
 							array_push($requiredFlds,'certType');
@@ -906,17 +890,18 @@ class UnionPay{
 					$port = $this->port;
 					//$data = $classobj->initiateRequest($merged_final,$url,$port);
 					$data = $this->initiateRequest($merged_final,$url,$port);
-					print_r($data);
-					if(strlen($data) < 1){
+					
+					if(strlen($data) < 1 || strtoupper($data)==="INVALID REQUEST."){
+						$this->log->error( $data . " Request URL is missing");
+
 						throw new \Exception('Error, contact system administrator');
 					}
-					//echo "response:". $data. "<br/>";
 					$ares = explode("&",$data);
 					//Svar_dump($ares);
 					//$resp="";
 
-
 					foreach( $ares as $item){
+
 						$temp = explode("=",$item); //accNo will lose the == and this should be returned
 						$key=$temp[0];
 						//var_dump($temp);
