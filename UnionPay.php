@@ -31,7 +31,7 @@ class UnionPay{
 	
 	
 	//URLS
-	const BACKURL="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php";
+	//const BACKURL="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php";
 	const BACKTRANSURL = "https://gateway.test.95516.com/gateway/api/backTransReq.do";
 	const SINGLEQUERYURL="https://gateway.test.95516.com/gateway/api/queryTrans.do";
 	//certificates
@@ -60,17 +60,13 @@ class UnionPay{
 	private $bizType = "000000";
 	private $accessType ="0";
 	private $channelType ="08";
-	private $currencyCode;
-	private $merId=;
+	private $merId="000000070000017";
+	private $backUrl="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php";
 
-	/** backUrl callback url that receives server to server response */
-	private $backUrl;
-	/** frontUrl is a callback url that is a server to client response */
-	private $frontUrl;
 	/*identifier of certificate used for encryption of data */
     private $certId;
 
-    //public $frontTransUrl;
+	private $currencyCode;
 
 
 	/*to store the basic required items when making a request */
