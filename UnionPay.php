@@ -110,6 +110,7 @@ class UnionPay{
 		set default values during class instantiation
 	*/
 		//$this->getLogFile("upop");
+/*
 		$this->version=getenv('UPOP.VERSION');
 		$this->encoding=getenv('UPOP.ENCODING');
 		$this->signMethod=getenv('UPOP.SIGNMETHOD');
@@ -134,6 +135,15 @@ class UnionPay{
 
         $this->middleCertPath=getenv('UPOP.MIDDLECERT.PATH');
         $this->rootCertPath=getenv('UPOP.ROOTCERT.PATH');
+*/
+		error_reporting(E_ALL);
+		ini_set('display_errors', TRUE);
+
+		ini_set('display_startup_errors', TRUE);
+		// load the dotenv file
+		$dotenv = Dotenv::createImmutable(__DIR__);
+		$dotenv->load();
+
 
 	}
 	private function getSignature($merged_data=null){
@@ -615,7 +625,7 @@ class UnionPay{
 		return $requiredInputs;
     }*/
 	
-    public function getLogFile($tag="iPay"){
+    private function getLogFile($tag="iPay"){
 		
         $dirname = getenv('LOGDIR');
 
@@ -652,349 +662,346 @@ class UnionPay{
 		}
     }
 
-	
-}
-/*
-This execution begins here by setting ups values
+	public function makeRequest(){
+		$dataRecd = file_get_contents('php://input');
 
-*/
-error_reporting(E_ALL);
-ini_set('display_errors', TRUE);
+		$isRequestJson = (json_decode($dataRecd) != NULL) ? true : false;
 
-ini_set('display_startup_errors', TRUE);
-// load the dotenv file
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-
-/*
-$dotenv = new \Dotenv\Dotenv(__DIR__.'/secure');
-$dotenv->load();
-*/
-$dataRecd = file_get_contents('php://input');
-$isRequestJson = (json_decode($dataRecd) != NULL) ? true : false;
-$unionpay = new UnionPay(); //instantiate unionpay class
-$unionpay->getLogFile("upop");
-try{
-	if ($isRequestJson){
-		$requiredUserData = ['type'] ;// inital required input that has to be present to determine transaction processing
-		$json = json_decode($dataRecd); 
-		//check that json request has the basic required inputs. Further validation will be done for each transation type
-		// the initial validation of json input in order to determine which task to perform
-		$isValid = $unionpay->validateRequest($json,$requiredUserData);
+		try{
+			if ($isRequestJson){
+				$requiredUserData = ['type'] ;// inital required input that has to be present to determine transaction processing
+				$json = json_decode($dataRecd); 
+				//check that json request has the basic required inputs. Further validation will be done for each transation type
+				// the initial validation of json input in order to determine which task to perform
+				$isValid = $unionpay->validateRequest($json,$requiredUserData);
 
 
-		if ($isValid){
+				if ($isValid){
 
-			$class = null;
-			// fields required are for de
-			$requiredFlds = $unionpay->getRequiredFlds();
-			$url = $unionpay->backTransUrl;
-			switch ($json->type){
-				case $unionpay::PURCHASE:
-					// purchase
-					//$var = 'Purchase';
-                    $txntype=getenv('UPOP.PUR.TXNTYPE');
-                    $txnSubType=getenv('UPOP.TXNSUBTYPE');
-                    $encryptedCertId = $unionpay->encryptedCertId();
-                    $combined=[];
-                    $requiredUserData = ['card','cvn','expiry','phoneno','txnAmt','txnTime'];
-                    $unionpay->validateRequest($json,$requiredUserData);
-                    
-                    if($json->card===""){	
-                        throw new \Exception("Please provide card details");
+					$class = null;
+					// fields required are for de
+					$requiredFlds = $this->getRequiredFlds();
+					$url = $this->backTransUrl;
+					switch ($json->type){
+						case self::PURCHASE:
+							// purchase
+							//$var = 'Purchase';
+							$txntype=getenv('UPOP.PUR.TXNTYPE');
+							$txnSubType=getenv('UPOP.TXNSUBTYPE');
+							$encryptedCertId = $unionpay->encryptedCertId();
+							$combined=[];
+							$requiredUserData = ['card','cvn','expiry','phoneno','txnAmt','txnTime'];
+							$unionpay->validateRequest($json,$requiredUserData);
 
-                    }
-                    else{
-                        
-                        if($json->expiry==="" && $json->cvn==="" && $json->phoneno==="" && $json->card){
-                                $requiredUserData = ["smsCode"];
-                                $unionpay->validateRequest($json,$requiredUserData);
+							if($json->card===""){	
+								throw new \Exception("Please provide card details");
 
-                                if ($json->smsCode===""){
-                                    throw new \Exception("Please provide card details");
+							}
+							else{
 
-                                }
-                                else{
-                                    $customerInfo =["smsCode"=>  $unionpay->smsCode];
-                                }
-                            }
-                            else{
+								if($json->expiry==="" && $json->cvn==="" && $json->phoneno==="" && $json->card){
+										$requiredUserData = ["smsCode"];
+										$unionpay->validateRequest($json,$requiredUserData);
 
-                                $cardDetails ="expired=".$json->expiry."&cvn2=". $json->cvn. "&phoneNo=". $json->phoneno;
-                                // card details such as expiry month, year and cvv encrypted seperately from card number 
-                                $encryptedInfo = $unionpay->encryptCardData($cardDetails);
-                                $encryptedCard = $unionpay->encryptCardData($json->card);
-                                //incase of presence of SMS code functionality it is combined with encrypted card details
-                                $customerInfo = ["smsCode"=>  $unionpay->smsCode,"encryptedInfo"=>$encryptedInfo];
-                            }
-                        $encryptedCustomerInfo =  $unionpay->encryptCustomerInfo($customerInfo,$json->card);
-                        $customerData = ["accNo"=>$encryptedCard, "encryptCertId"=>$encryptedCertId,"customerInfo"=>$encryptedCustomerInfo,"txnAmt"=> $json->txnAmt,"currencyCode"=$json->currency];
-                        $purchaseContent = $unionpay->getPurchaseContent();
-                        $combined = array_merge($purchaseContent,$customerData);
-                        // add additional fields for validation 
-                        array_push($requiredFlds, 'txnAmt','channelType','currencyCode','backUrl');
-                    }
-                    break;
-				case $unionpay::CANCELPURCHASE:
-					//$var = 'PurchaseCancel';
-					//$url = $unionpay->backTransUrl;
+										if ($json->smsCode===""){
+											throw new \Exception("Please provide card details");
 
-					$txntype =getenv('UPOP.PUR.CANCEL.TXNTYPE');
-					$txnSubType=getenv('UPOP.GLOBAL.TYPE');
+										}
+										else{
+											$customerInfo =["smsCode"=>  $unionpay->smsCode];
+										}
+									}
+									else{
 
-					$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt,"currencyCode"=>$json->currency];
-					$purchaseContent = $unionpay->getPurchaseContent();
-					$combined = array_merge($purchaseContent,$customerData);
-					array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
+										$cardDetails ="expired=".$json->expiry."&cvn2=". $json->cvn. "&phoneNo=". $json->phoneno;
+										// card details such as expiry month, year and cvv encrypted seperately from card number 
+										$encryptedInfo = $unionpay->encryptCardData($cardDetails);
+										$encryptedCard = $unionpay->encryptCardData($json->card);
+										//incase of presence of SMS code functionality it is combined with encrypted card details
+										$customerInfo = ["smsCode"=>  $unionpay->smsCode,"encryptedInfo"=>$encryptedInfo];
+									}
+								$encryptedCustomerInfo =  $unionpay->encryptCustomerInfo($customerInfo,$json->card);
+								$customerData = ["accNo"=>$encryptedCard, "encryptCertId"=>$encryptedCertId,"customerInfo"=>$encryptedCustomerInfo,"txnAmt"=> $json->txnAmt,"currencyCode"=$json->currency];
+								$purchaseContent = $unionpay->getPurchaseContent();
+								$combined = array_merge($purchaseContent,$customerData);
+								// add additional fields for validation 
+								array_push($requiredFlds, 'txnAmt','channelType','currencyCode','backUrl');
+							}
+							break;
+						case self::CANCELPURCHASE:
+							//$var = 'PurchaseCancel';
+							//$url = $unionpay->backTransUrl;
 
-					//purchase Cancel
-					break;
-				case $unionpay::REFUND:
-					// refund
-					//$url = $unionpay->backTransUrl;
+							$txntype =getenv('UPOP.PUR.CANCEL.TXNTYPE');
+							$txnSubType=getenv('UPOP.GLOBAL.TYPE');
 
-					$txntype = getenv('UPOP.REFUND.TXNTYPE');
-					$txnSubType = getenv('UPOP.GLOBAL.TYPE');
-					$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
-					$purchaseContent = $unionpay->getRefundContent();
-					$combined = array_merge($purchaseContent,$customerData);
-					array_push($requiredFlds,'txnAmt','channelType','backUrl','origQryId');
+							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt,"currencyCode"=>$json->currency];
+							$purchaseContent = $unionpay->getPurchaseContent();
+							$combined = array_merge($purchaseContent,$customerData);
+							array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
+
+							//purchase Cancel
+							break;
+						case self::REFUND:
+							// refund
+							//$url = $unionpay->backTransUrl;
+
+							$txntype = getenv('UPOP.REFUND.TXNTYPE');
+							$txnSubType = getenv('UPOP.GLOBAL.TYPE');
+							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
+							$purchaseContent = $unionpay->getRefundContent();
+							$combined = array_merge($purchaseContent,$customerData);
+							array_push($requiredFlds,'txnAmt','channelType','backUrl','origQryId');
 
 
-					break;
-				case $unionpay::PREAUTH:
-					//PreAuth
-					//$url = $unionpay->backTransUrl;
+							break;
+						case self::PREAUTH:
+							//PreAuth
+							//$url = $unionpay->backTransUrl;
 
-					$txntype=getenv('UPOP.PREAUTH.TXNTYPE');
-					$txnSubType=getenv('UPOP.TXNSUBTYPE');
+							$txntype=getenv('UPOP.PREAUTH.TXNTYPE');
+							$txnSubType=getenv('UPOP.TXNSUBTYPE');
 
-					$duration = getenv('UPOP.PAYTIMEOUT');
+							$duration = getenv('UPOP.PAYTIMEOUT');
 
-					$time = new \DateTime(date("Y-m-d H:i:s"));
-					$timezone = new \DateTimeZone('Africa/Nairobi');
-					$time->setTimezone($timezone);
-					//echo "time: ".$time->format('Y-m-d H:i');
-					//echo 'duration='.$txnSubType;
-					$time->add(new \DateInterval('PT' . $duration . 'M'));
+							$time = new \DateTime(date("Y-m-d H:i:s"));
+							$timezone = new \DateTimeZone('Africa/Nairobi');
+							$time->setTimezone($timezone);
+							//echo "time: ".$time->format('Y-m-d H:i');
+							//echo 'duration='.$txnSubType;
+							$time->add(new \DateInterval('PT' . $duration . 'M'));
 
-					$payTimeOut = $time->format('YmdHis');
-					if($json->expiry==="" && $json->cvn==="" && $json->phoneno===""){
-						if ($json->smsCode===""){
-							new \Exception("Invalid request");
+							$payTimeOut = $time->format('YmdHis');
+							if($json->expiry==="" && $json->cvn==="" && $json->phoneno===""){
+								if ($json->smsCode===""){
+									new \Exception("Invalid request");
+
+								}
+								else{
+									$customerInfo =["smsCode"=>  $unionpay->smsCode];
+								}
+							}
+							else{
+								$cardDetails ="expired=".$json->expiry."&cvn2=". $json->cvn. "&phoneNo=". $json->phoneno;
+								$encryptedInfo = $unionpay->encryptCardData($cardDetails);
+
+								$customerInfo = ["encryptedInfo"=>$encryptedInfo];
+							}
+							$encryptedCard = $unionpay->encryptCardData($json->card);
+							$encryptedCertId = $unionpay->encryptedCertId();
+							$encryptedCustomerInfo =  $unionpay->encryptCustomerInfo($customerInfo,$json->card);
+							$customerData = ["accNo"=>$encryptedCard, "encryptCertId"=>$encryptedCertId,"customerInfo"=>$encryptedCustomerInfo,"txnAmt"=> $json->txnAmt, "payTimeout"=>$payTimeOut];
+
+							//$customerData = [ "txnAmt"=> $json->txnAmt,"payTimeout"=>$payTimeOut];
+							$purchaseContent = $unionpay->getPreauthContent();
+							$combined = array_merge($purchaseContent,$customerData);
+							array_push($requiredFlds,'txnAmt','channelType','backUrl','frontUrl', 'payTimeout');
+
+
+							break;
+						case self::CANCELPREAUTH:
+							//$url = $unionpay->backTransUrl;
+
+							$txntype=getenv('UPOP.PREAUTH.CANCEL.TXNTYPE');
+							$txnSubType=getenv('UPOP.GLOBAL.TYPE');
+
+							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
+							$purchaseContent = $unionpay->getPurchaseContent();
+							$combined = array_merge($purchaseContent,$customerData);
+							array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
+
+							break;
+						case self::COMPLETEPREAUTH:
+							//PreAuth Complete
+							//$url = $unionpay->backTransUrl;
+
+							$txntype=getenv('UPOP.PREAUTH.COMPLETE.TXNTYPE');
+							$txnSubType=getenv('UPOP.GLOBAL.TYPE');
+
+							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
+							$purchaseContent = $unionpay->getPurchaseContent();
+							$combined = array_merge($purchaseContent,$customerData);
+							array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
+
+							break;
+
+						case self::CANCELCOMPLETEPREAUTH:
+							//PreAuth Complete Cancel
+							//$url = $unionpay->backTransUrl;
+
+							$txntype=getenv('UPOP.PREAUTHCC.TXNTYPE');
+							$txnSubType=getenv('UPOP.GLOBAL.TYPE');
+
+							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
+							$purchaseContent = $unionpay->getPurchaseContent();
+							$combined = array_merge($purchaseContent,$customerData);
+							array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
+
+							break;
+
+						case self::RECURRING:
+							//$url = $unionpay->backTransUrl;
+
+							$txntype=getenv('UPOP.RECUR.TXNTYPE');
+							$txnSubType=getenv('UPOP.TXNSUBTYPE');
+
+							//Recurring
+							break;
+						case self::QUERY:
+							//query
+							$txntype=getenv('UPOP.FAIL.TYPE');
+							$txnSubType=getenv('UPOP.GLOBAL.TYPE');
+							//$custInfo = new CustomerInfo($txntype, $txnSubType);
+							$url = $unionpay->queryUrl;
+
+							$combined = ["certType"=>"01"];
+							array_push($requiredFlds,'certType');
+
+							break;
+
+						default:
+							new \Exception ("invalid type");
+
+					}
+					$defaultContent = $unionpay->getDefaultContent();
+					//print_r($defaultContent);
+
+
+					$defaultContent=array_merge($defaultContent,(array)$combined);
+
+					//$merged = $classobj->mergeData($defaultContent, $json, $type = null);
+					$types = ["txnType"=>$txntype,"txnSubType"=>$txnSubType];
+					$userData = ["orderId"=>$json->orderId,"txnTime"=>$json->txnTime];
+					$merged = array_merge($defaultContent, $userData,$types);
+
+					//$merged = $unionpay->mergeData($defaultContent, $userData, $types);
+					$sort = ksort($merged);
+					//var_dump($merged);
+					//$signature = $classobj->processRequest($merged, $requiredFlds);
+					$signature = $unionpay->processRequest($merged, $requiredFlds);
+					//echo "signature: ". $signature. "\n";
+
+
+					//$certID = $upopconf->certid;
+					//$certDetail = ["signature"=>$signature,"certId"=>$certID];
+					$certDetail = ["signature"=>$signature];
+					$merged_final= array_merge($merged,$certDetail);
+
+					// $sorted = ksort($merged_final);
+					//var_dump($merged_final);
+					$port = $unionpay->port;
+					//$data = $classobj->initiateRequest($merged_final,$url,$port);
+					$data = $unionpay->initiateRequest($merged_final,$url,$port);
+					print_r($data);
+					if(strlen($data) < 1){
+						throw new \Exception('Error, contact system administrator');
+					}
+					//echo "response:". $data. "<br/>";
+					$ares = explode("&",$data);
+					//Svar_dump($ares);
+					//$resp="";
+
+
+					foreach( $ares as $item){
+						$temp = explode("=",$item); //accNo will lose the == and this should be returned
+						$key=$temp[0];
+						//var_dump($temp);
+						if($key==='accNo')
+							$value=$temp[1]."=="; //return these == lost during explode
+						else
+							$value=$temp[1];
+
+						$resp[$key] =  $value;
+
+					}
+
+
+					foreach($resp as $key => $value ){
+					   if (  $key==='signPubKeyCert'){
+						   $pubcertStr=$value;
+						   break;
+					   }
+					}
+					$respCode = $resp['respCode'] ;
+					//print_r($resp);
+					$validCert = $unionpay->isPubKeyCertValid($pubcertStr);
+					if ($validCert){
+
+						if ($respCode =='00'){
+							$validData = $unionpay->isDataValid($resp);
+
+							if ($validData){
+								$queryId= $resp['queryId']	;
+
+								echo '{
+									"status":"200",
+									"description":"OK",
+									"queryId":"'.$queryId.'",
+									"respCode":"'.$respCode.'"
+
+								}';
+							}
+							else{
+								echo '{
+										"status":"400",
+										"description":"Error, contact system administrator",
+										"respCode":"'."99".'"
+
+									}';
+							}
 
 						}
 						else{
-							$customerInfo =["smsCode"=>  $unionpay->smsCode];
-						}
-					}
-					else{
-						$cardDetails ="expired=".$json->expiry."&cvn2=". $json->cvn. "&phoneNo=". $json->phoneno;
-						$encryptedInfo = $unionpay->encryptCardData($cardDetails);
-
-						$customerInfo = ["encryptedInfo"=>$encryptedInfo];
-					}
-					$encryptedCard = $unionpay->encryptCardData($json->card);
-					$encryptedCertId = $unionpay->encryptedCertId();
-					$encryptedCustomerInfo =  $unionpay->encryptCustomerInfo($customerInfo,$json->card);
-					$customerData = ["accNo"=>$encryptedCard, "encryptCertId"=>$encryptedCertId,"customerInfo"=>$encryptedCustomerInfo,"txnAmt"=> $json->txnAmt, "payTimeout"=>$payTimeOut];
-
-					//$customerData = [ "txnAmt"=> $json->txnAmt,"payTimeout"=>$payTimeOut];
-					$purchaseContent = $unionpay->getPreauthContent();
-					$combined = array_merge($purchaseContent,$customerData);
-					array_push($requiredFlds,'txnAmt','channelType','backUrl','frontUrl', 'payTimeout');
-
-
-					break;
-				case $unionpay::CANCELPREAUTH:
-					//$url = $unionpay->backTransUrl;
-
-					$txntype=getenv('UPOP.PREAUTH.CANCEL.TXNTYPE');
-					$txnSubType=getenv('UPOP.GLOBAL.TYPE');
-
-					$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
-					$purchaseContent = $unionpay->getPurchaseContent();
-					$combined = array_merge($purchaseContent,$customerData);
-					array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
-
-					break;
-				case $unionpay::COMPLETEPREAUTH:
-					//PreAuth Complete
-					//$url = $unionpay->backTransUrl;
-
-					$txntype=getenv('UPOP.PREAUTH.COMPLETE.TXNTYPE');
-					$txnSubType=getenv('UPOP.GLOBAL.TYPE');
-
-					$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
-					$purchaseContent = $unionpay->getPurchaseContent();
-					$combined = array_merge($purchaseContent,$customerData);
-					array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
-
-					break;
-
-				case $unionpay::CANCELCOMPLETEPREAUTH:
-					//PreAuth Complete Cancel
-					//$url = $unionpay->backTransUrl;
-
-					$txntype=getenv('UPOP.PREAUTHCC.TXNTYPE');
-					$txnSubType=getenv('UPOP.GLOBAL.TYPE');
-
-					$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
-					$purchaseContent = $unionpay->getPurchaseContent();
-					$combined = array_merge($purchaseContent,$customerData);
-					array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
-
-					break;
-
-				case $unionpay::RECURRING:
-					//$url = $unionpay->backTransUrl;
-
-					$txntype=getenv('UPOP.RECUR.TXNTYPE');
-					$txnSubType=getenv('UPOP.TXNSUBTYPE');
-
-					//Recurring
-					break;
-				case $unionpay::QUERY:
-					//query
-					$txntype=getenv('UPOP.FAIL.TYPE');
-					$txnSubType=getenv('UPOP.GLOBAL.TYPE');
-					//$custInfo = new CustomerInfo($txntype, $txnSubType);
-					$url = $unionpay->queryUrl;
-
-					$combined = ["certType"=>"01"];
-					array_push($requiredFlds,'certType');
-
-					break;
-
-				default:
-					new \Exception ("invalid type");
-
-			}
-			$defaultContent = $unionpay->getDefaultContent();
-			//print_r($defaultContent);
-
-
-			$defaultContent=array_merge($defaultContent,(array)$combined);
-
-			//$merged = $classobj->mergeData($defaultContent, $json, $type = null);
-			$types = ["txnType"=>$txntype,"txnSubType"=>$txnSubType];
-			$userData = ["orderId"=>$json->orderId,"txnTime"=>$json->txnTime];
-			$merged = array_merge($defaultContent, $userData,$types);
-
-			//$merged = $unionpay->mergeData($defaultContent, $userData, $types);
-			$sort = ksort($merged);
-			//var_dump($merged);
-			//$signature = $classobj->processRequest($merged, $requiredFlds);
-			$signature = $unionpay->processRequest($merged, $requiredFlds);
-			//echo "signature: ". $signature. "\n";
-
-
-			//$certID = $upopconf->certid;
-			//$certDetail = ["signature"=>$signature,"certId"=>$certID];
-			$certDetail = ["signature"=>$signature];
-			$merged_final= array_merge($merged,$certDetail);
-
-			// $sorted = ksort($merged_final);
-			//var_dump($merged_final);
-			$port = $unionpay->port;
-			//$data = $classobj->initiateRequest($merged_final,$url,$port);
-			$data = $unionpay->initiateRequest($merged_final,$url,$port);
-			print_r($data);
-			if(strlen($data) < 1){
-				throw new \Exception('Error, contact system administrator');
-			}
-			//echo "response:". $data. "<br/>";
-			$ares = explode("&",$data);
-			//Svar_dump($ares);
-			//$resp="";
-			
-
-			foreach( $ares as $item){
-				$temp = explode("=",$item); //accNo will lose the == and this should be returned
-				$key=$temp[0];
-				//var_dump($temp);
-				if($key==='accNo')
-					$value=$temp[1]."=="; //return these == lost during explode
-				else
-					$value=$temp[1];
-
-				$resp[$key] =  $value;
-
-			}
-
-
-			foreach($resp as $key => $value ){
-			   if (  $key==='signPubKeyCert'){
-				   $pubcertStr=$value;
-				   break;
-			   }
-			}
-			$respCode = $resp['respCode'] ;
-			//print_r($resp);
-			$validCert = $unionpay->isPubKeyCertValid($pubcertStr);
-			if ($validCert){
-
-				if ($respCode =='00'){
-					$validData = $unionpay->isDataValid($resp);
-
-					if ($validData){
-						$queryId= $resp['queryId']	;
-
-						echo '{
-							"status":"200",
-							"description":"OK",
-							"queryId":"'.$queryId.'",
-							"respCode":"'.$respCode.'"
-
-						}';
-					}
-					else{
-						echo '{
+							echo '{
 								"status":"400",
-								"description":"Error, contact system administrator",
-								"respCode":"'."99".'"
+								"description":"failed",
+								"respCode":"'.$respCode.'"
 
 							}';
+						}
+					}	
+					else{
+						die("certificate not valid");
 					}
 
 				}
 				else{
 					echo '{
 						"status":"400",
-						"description":"failed",
-						"respCode":"'.$respCode.'"
+						"description":"Missing required Field. Please ensure card details and/or sms code is provided";
 
 					}';
+
 				}
-			}	
-			else{
-				die("certificate not valid");
+
 			}
+			else{
 
+				new \Exception ("invalid JSON request");
+
+			}
 		}
-		else{
-			echo '{
-				"status":"400",
-				"description":"Missing required Field. Please ensure card details and/or sms code is provided";
-
-			}';
-
+		catch(\Exception $e){
+					echo '{
+					"status":"400",
+					"description":"'. $e->getMessage().
+				'"
+				}';
 		}
-
 	}
-	else{
-
-		new \Exception ("invalid JSON request");
-
-	}
+	
 }
-catch(\Exception $e){
-			echo '{
-			"status":"400",
-			"description":"'. $e->getMessage().
-		'"
-		}';
-}
+/*
+This execution begins here by setting ups values
+
+*/
+
+
+/*
+$dotenv = new \Dotenv\Dotenv(__DIR__.'/secure');
+$dotenv->load();
+*/
+$unionpay = new UnionPay(); //instantiate unionpay class
+$unionpay->makeRequest();
 
 ?>
