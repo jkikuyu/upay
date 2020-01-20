@@ -13,11 +13,16 @@
         }
     ],
     "require": {
-        "php": ">=5.3.0"
+        "php": ">=5.3.0",
+          "unionpay/unionpay": "dev-master"
 
     },
-    "autoload": {
-        "psr-0": { "unionpay": "unionpay" }
-    }
+
+    "repositories" : [
+        {
+        "type": "git",
+        "url":  "https://bitbucket.org/ipayafrica/unionpay.git test"
+        }
+    ],
 
 }
