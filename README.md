@@ -65,7 +65,8 @@ A purchase request
     "txnTime": "20200107131402",
     "cvn": "123",
     "expiry": "3012",
-    "phoneno": "13552535506"
+    "phoneno": "13552535506",
+ 	"currency": "156"
 }
 ```
 

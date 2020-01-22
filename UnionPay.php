@@ -685,45 +685,50 @@ class UnionPay{
 							$txnSubType="01";
 							$encryptedCertId = $this->encryptedCertId();
 							$combined=[];
-							$requiredUserData = ['card','cvn','expiry','phoneno','txnAmt','txnTime'];
-							$this->validateRequest($json,$requiredUserData);
+							$requiredUserData = ['card','cvn','expiry','phoneno','txnAmt','txnTime',"currency","orderId"];
+							$isValid = $this->validateRequest($json,$requiredUserData);
+							if ($isValid){
+								if($json->card===""){
+									$this->log->error("Please provide card details");
+									throw new \Exception("Error, contact system administrator");
 
-							if($json->card===""){
-								$this->log->error("Please provide card details");
-								throw new \Exception("Error, contact system administrator");
+								}
+								else{
 
-							}
-							else{
+									if($json->expiry==="" && $json->cvn==="" && $json->phoneno==="" && $json->card){
+											$requiredUserData = ["smsCode"];
+											$this->validateRequest($json,$requiredUserData);
 
-								if($json->expiry==="" && $json->cvn==="" && $json->phoneno==="" && $json->card){
-										$requiredUserData = ["smsCode"];
-										$this->validateRequest($json,$requiredUserData);
+											if ($json->smsCode===""){
+												$this->log->error("Please provide card details");
 
-										if ($json->smsCode===""){
-											$this->log->error("Please provide card details");
+												throw new \Exception("Error, contact system administrator");
 
-											throw new \Exception("Error, contact system administrator");
-
+											}
+											else{
+												$customerInfo =["smsCode"=>  $this->smsCode];
+											}
 										}
 										else{
-											$customerInfo =["smsCode"=>  $this->smsCode];
-										}
-									}
-									else{
 
-										$cardDetails ="expired=".$json->expiry."&cvn2=". $json->cvn. "&phoneNo=". $json->phoneno;
-										// card details such as expiry month, year and cvv encrypted seperately from card number 
-										$encryptedInfo = $this->encryptCardData($cardDetails);
-										$encryptedCard = $this->encryptCardData($json->card);
-										//incase of presence of SMS code functionality it is combined with encrypted card details
-										$customerInfo = ["smsCode"=>  $this->smsCode, "encryptedInfo"=>$encryptedInfo];
-									}
-								$encryptedCustomerInfo =  $this->encryptCustomerInfo($customerInfo,$json->card);
-								$customerData = ["accNo"=>$encryptedCard, "encryptCertId"=>$encryptedCertId,"customerInfo"=>$encryptedCustomerInfo,"txnAmt"=> $json->txnAmt,"currencyCode"=>$json->currency];
-								$purchaseContent = $this->getPurchaseContent();
-								$combined = array_merge($purchaseContent,$customerData);
-								// add additional fields for validation 
-								array_push($requiredFlds, 'txnAmt','channelType','currencyCode','backUrl');
+											$cardDetails ="expired=".$json->expiry."&cvn2=". $json->cvn. "&phoneNo=". $json->phoneno;
+											// card details such as expiry month, year and cvv encrypted seperately from card number 
+											$encryptedInfo = $this->encryptCardData($cardDetails);
+											$encryptedCard = $this->encryptCardData($json->card);
+											//incase of presence of SMS code functionality it is combined with encrypted card details
+											$customerInfo = ["smsCode"=>  $this->smsCode, "encryptedInfo"=>$encryptedInfo];
+										}
+									$encryptedCustomerInfo =  $this->encryptCustomerInfo($customerInfo,$json->card);
+									$customerData = ["accNo"=>$encryptedCard, "encryptCertId"=>$encryptedCertId,"customerInfo"=>$encryptedCustomerInfo,"txnAmt"=> $json->txnAmt,"currencyCode"=>$json->currency];
+									$purchaseContent = $this->getPurchaseContent();
+									$combined = array_merge($purchaseContent,$customerData);
+									// add additional fields for validation 
+									array_push($requiredFlds,'channelType','backUrl');
+								}
+							}
+							else{
+								throw new \Exception("Error, contact system administrator");
+
 							}
 							break;
 						case self::CANCELPURCHASE:
@@ -732,11 +737,18 @@ class UnionPay{
 
 							$txntype ="31";
 							$txnSubType="00";
+							$requiredUserData = ["txnAmt","txnTime","currency",'serialno'];
+							$isValid = $this->validateRequest($json,$requiredUserData);
+							if($isValid){
+								$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt,"currencyCode"=>$json->currency];
+								$purchaseContent = $this->getPurchaseContent();
+								$combined = array_merge($purchaseContent,$customerData);
+								array_push($requiredFlds,'channelType','backUrl');
+							}
+							else{
+								throw new \Exception("Error, contact system administrator");
 
-							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt,"currencyCode"=>$json->currency];
-							$purchaseContent = $this->getPurchaseContent();
-							$combined = array_merge($purchaseContent,$customerData);
-							array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
+							}
 
 							//purchase Cancel
 							break;
@@ -849,12 +861,21 @@ class UnionPay{
 							//query
 							$txntype="00";
 							$txnSubType="00";
-							//$custInfo = new CustomerInfo($txntype, $txnSubType);
-							$url = self::SINGLEQUERYURL;
+							$requiredUserData = ["txnTime","orderId"];
+							$isValid = $this->validateRequest($json,$requiredUserData);
+							if($isValid){
+							
+							
+								//$custInfo = new CustomerInfo($txntype, $txnSubType);
+								$url = self::SINGLEQUERYURL;
 
-							$combined = ["certType"=>"01"];
-							array_push($requiredFlds,'certType');
+								$combined = ["certType"=>"01"];
+								array_push($requiredFlds,'certType');
+							}
+							else{
+								throw new \Exception("Error, contact system administrator");
 
+							}
 							break;
 
 						default:
