@@ -104,7 +104,8 @@ The pre authorization request is shown below
     "txnTime": "20200116141702",
     "cvn": "123",
     "expiry": "3012",
-    "phoneno": "13552535506"
+    "phoneno": "13552535506",
+ 	"currency": "156"
 }
 ```
 # POST Pre-Authorization Cancellation
@@ -116,7 +117,9 @@ The pre authorization cancellation request is used to reverse the Pre authorizat
     "orderId": "IPAY2020095",
     "txnAmt": 1590,
     "txnTime": "20200116140642",
-    "serialno": "042001161417022386518"
+    "serialno": "042001161417022386518",
+  	"currency": "156"
+
 }
 ```
 # POST Pre-Authorization Complete
@@ -126,7 +129,9 @@ The pre authorization cancellation request is used to reverse the Pre authorizat
     "orderId": "IPAY2020098",
     "txnAmt": 1590,
     "txnTime": "20200116142021",
-    "serialno": "212001161419022512768"
+    "serialno": "212001161419022512768",
+  	"currency": "156"
+
 }
 ```
 # POST Pre-Authorization Complete Cancellation
