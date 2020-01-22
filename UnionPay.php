@@ -40,7 +40,7 @@ class UnionPay{
 	const BACKTRANSURL = "https://gateway.test.95516.com/gateway/api/backTransReq.do";
 	const SINGLEQUERYURL="https://gateway.test.95516.com/gateway/api/queryTrans.do";
 	private $backUrl="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php";
-
+	private $frontUrl="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/frontRcvResponse.php";
 	private $version="5.1.0";
 	private $encoding ="UTF-8";
 	private $signMethod="01";
@@ -115,30 +115,7 @@ class UnionPay{
 	/*
 		set default values during class instantiation
 	*/
-		//$this->getLogFile("upop");
-/*
-		$this->version=getenv('UPOP.VERSION');
-		$this->encoding=getenv('UPOP.ENCODING');
-		$this->signMethod=getenv('UPOP.SIGNMETHOD');
-		$this->bizType=getenv('UPOP.BIZTYPE');
-		$this->accessType=getenv('UPOP.ACCESSTYPE');
-		$this->channelType=getenv('UPOP.CHANNELTYPE');
-		$this->merId=getenv('UPOP.MERCHANTID');
-		$this->currencyCode=getenv('UPOP.CURRENCYCODE');
-		//$this->payTimeOut=getenv('UPOP.PAYTIMEOUT');
-		$this->backUrl = getenv('UPOP.BACKURL');
-		$this->frontUrl=getenv('UPOP.FRONTURL');
-		$this->backTransUrl=getenv('UPOP.BACKTRANSURL');
-		//$this->frontTransUrl=getenv('UPOP.FRONTTRANSURL');
-		$this->port = getenv('UPOP.PORT');
-		$this->queryUrl = getenv('UPOP.SINGLEQUERYURL');
-		$this->encryptCert=getenv('UPOP.ENCRYPTCERT.PATH');
-        $this->signCertPath=getenv('UPOP.SIGNCERT.PATH');
-        $this->signCertType=getenv('UPOP.SIGNCERT.TYPE');
 
-        $this->middleCertPath=getenv('UPOP.MIDDLECERT.PATH');
-        $this->rootCertPath=getenv('UPOP.ROOTCERT.PATH');
-*/
 		error_reporting(E_ALL);
 		ini_set('display_errors', TRUE);
 
@@ -414,7 +391,6 @@ class UnionPay{
 
 			}
 
-			//$intermediateCerts=self::$middleCert.self::$rootCert.$pubCertStr;
 		}
 		
 	return $isValid;
@@ -437,8 +413,6 @@ class UnionPay{
 		if (openssl_verify($strDataEnc,$decodedStr,$pubkey,$alg )){
 			$success=true;
 		}
-		//$success = openssl_verify($strDataEnc, $b64,$pubkey);
-		//echo "status of verification:". $success;
 		return $success;
 
 	}
@@ -470,14 +444,7 @@ class UnionPay{
 	return $signature;
 
 	}	
-/*
-	public function mergeData($defaultContent=null,$userData=null, $type){
-		$type = ["txnType"=>$this->txntype,"txnSubType"=>$this->txnSubType];
-		$merged_data = parent::mergeData($defaultContent,$userData,$type);
 
-		return $merged_data;
-	}
-*/
 	private function convertToString($merged_final=null){
         $strData = null;
         ksort($merged_final);
@@ -586,7 +553,6 @@ class UnionPay{
 	private function getPreauthContent(){
 		 $content = array(
 		"channelType"=>$this->channelType,
-		"currencyCode"=>$this->currencyCode,
 		"frontUrl"=> $this->frontUrl,
 		"backUrl"=> $this->backUrl
 		 );
@@ -643,7 +609,8 @@ class UnionPay{
 
 				if(!$dir_exists){
 					if(!mkdir($save_dir, 0755, true)){
-						throw new \Exception('Unable to create directory');
+						$this->log->error("Unable to create directory");
+						throw new \Exception("Error, contact system administrator");
 					}
 				}
 				$dir = $save_dir;
@@ -773,65 +740,85 @@ class UnionPay{
 							$txnSubType="01";
 
 							$duration = "3";
+							$requiredUserData = ['card','cvn','expiry','phoneno','txnAmt','txnTime',"currency","orderId"];
+							$isValid = $this->validateRequest($json,$requiredUserData);
+							if ($isValid){
+								$time = new \DateTime(date("Y-m-d H:i:s"));
+								$timezone = new \DateTimeZone('Africa/Nairobi');
+								$time->setTimezone($timezone);
+								//echo "time: ".$time->format('Y-m-d H:i');
+								//echo 'duration='.$txnSubType;
+								$time->add(new \DateInterval('PT' . $duration . 'M'));
 
-							$time = new \DateTime(date("Y-m-d H:i:s"));
-							$timezone = new \DateTimeZone('Africa/Nairobi');
-							$time->setTimezone($timezone);
-							//echo "time: ".$time->format('Y-m-d H:i');
-							//echo 'duration='.$txnSubType;
-							$time->add(new \DateInterval('PT' . $duration . 'M'));
+								$payTimeOut = $time->format('YmdHis');
+								if($json->expiry==="" && $json->cvn==="" && $json->phoneno===""){
+									if ($json->smsCode===""){
+										new \Exception("Error, contact system administrator");
 
-							$payTimeOut = $time->format('YmdHis');
-							if($json->expiry==="" && $json->cvn==="" && $json->phoneno===""){
-								if ($json->smsCode===""){
-									new \Exception("Invalid request");
-
+									}
+									else{
+										$customerInfo =["smsCode"=>  $this->smsCode];
+									}
 								}
 								else{
-									$customerInfo =["smsCode"=>  $this->smsCode];
+									$cardDetails ="expired=".$json->expiry."&cvn2=". $json->cvn. "&phoneNo=". $json->phoneno;
+									$encryptedInfo = $this->encryptCardData($cardDetails);
+
+									$customerInfo = ["encryptedInfo"=>$encryptedInfo];
 								}
+								$encryptedCard = $this->encryptCardData($json->card);
+								$encryptedCertId = $this->encryptedCertId();
+								$encryptedCustomerInfo =  $this->encryptCustomerInfo($customerInfo,$json->card);
+								$customerData = ["accNo"=>$encryptedCard, "encryptCertId"=>$encryptedCertId,"customerInfo"=>$encryptedCustomerInfo,"txnAmt"=> $json->txnAmt,"currencyCode"=>$json->currency, "payTimeout"=>$payTimeOut];
+
+								//$customerData = [ "txnAmt"=> $json->txnAmt,"payTimeout"=>$payTimeOut];
+								$purchaseContent = $this->getPreauthContent();
+								$combined = array_merge($purchaseContent,$customerData);
+								array_push($requiredFlds,'txnAmt','channelType','backUrl','frontUrl', 'payTimeout');
 							}
 							else{
-								$cardDetails ="expired=".$json->expiry."&cvn2=". $json->cvn. "&phoneNo=". $json->phoneno;
-								$encryptedInfo = $this->encryptCardData($cardDetails);
-
-								$customerInfo = ["encryptedInfo"=>$encryptedInfo];
+								throw new \Exception("Error, contact system administrator");
+			
 							}
-							$encryptedCard = $this->encryptCardData($json->card);
-							$encryptedCertId = $this->encryptedCertId();
-							$encryptedCustomerInfo =  $this->encryptCustomerInfo($customerInfo,$json->card);
-							$customerData = ["accNo"=>$encryptedCard, "encryptCertId"=>$encryptedCertId,"customerInfo"=>$encryptedCustomerInfo,"txnAmt"=> $json->txnAmt, "payTimeout"=>$payTimeOut];
-
-							//$customerData = [ "txnAmt"=> $json->txnAmt,"payTimeout"=>$payTimeOut];
-							$purchaseContent = $this->getPreauthContent();
-							$combined = array_merge($purchaseContent,$customerData);
-							array_push($requiredFlds,'txnAmt','channelType','backUrl','frontUrl', 'payTimeout');
 
 
 							break;
 						case self::CANCELPREAUTH:
-							//$url = $this->backTransUrl;
 
 							$txntype="32";
 							$txnSubType="00";
 
-							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
-							$purchaseContent = $this->getPurchaseContent();
-							$combined = array_merge($purchaseContent,$customerData);
-							array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
 
+							$requiredUserData = ["txnAmt","txnTime","orderId","serialno","currency"];
+							$isValid = $this->validateRequest($json,$requiredUserData);
+							if($isValid){
+								$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt, "currencyCode"=>$json->currency ];
+								$purchaseContent = $this->getPurchaseContent();
+								$combined = array_merge($purchaseContent,$customerData);
+								array_push($requiredFlds,'channelType','backUrl','origQryId');
+							}
+							else{
+								throw new \Exception("Error, contact system administrator");
+
+							}
 							break;
 						case self::COMPLETEPREAUTH:
-							//PreAuth Complete
-							//$url = $this->backTransUrl;
 
 							$txntype="03";
 							$txnSubType="00";
+							$requiredUserData = ["txnAmt","txnTime","orderId","serialno","currency"];
+							$isValid = $this->validateRequest($json,$requiredUserData);
+							if($isValid){
 
-							$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt];
-							$purchaseContent = $this->getPurchaseContent();
-							$combined = array_merge($purchaseContent,$customerData);
-							array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
+								$customerData = ["origQryId"=>$json->serialno, "txnAmt"=> $json->txnAmt, "currencyCode"=>$json->currency];
+								$purchaseContent = $this->getPurchaseContent();
+								$combined = array_merge($purchaseContent,$customerData);
+								array_push($requiredFlds,'txnAmt','channelType','currencyCode','backUrl','origQryId');
+							}
+							else{
+								throw new \Exception("Error, contact system administrator");
+							
+							}
 
 							break;
 
@@ -1011,19 +998,5 @@ class UnionPay{
 	}
 	
 }
-/*
-This execution begins here by setting ups values
-
-*/
-
-
-/*
-$dotenv = new \Dotenv\Dotenv(__DIR__.'/secure');
-$dotenv->load();
-*/
-$unionpay = new UnionPay(); //instantiate unionpay class
-$dataRecd = file_get_contents('php://input');
-
-$unionpay->makeRequest($dataRecd);
 
 ?>
