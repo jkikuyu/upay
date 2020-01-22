@@ -206,7 +206,7 @@ A json response is returned to the front end as follows
 "respCode":"35"
 
 }
-````
+```
 # Union Pay Response Codes
 The General response code range and their description is given below
 
