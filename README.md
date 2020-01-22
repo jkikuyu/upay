@@ -34,6 +34,15 @@ unionpay/certs
 ~~~~
 /unionpay
 ~~~~
+# Making a request
+A request is made by intiating the Unionpay class and passing the json string to the `makeRequest` function
+```php
+<?php
+	$unionpay = new UnionPay(); //instantiate unionpay class
+	$dataRecd = file_get_contents('php://input');//get json string
+	$unionpay->makeRequest($dataRecd); //call function with request
+?>
+```
 
 # Headers
 
@@ -142,7 +151,9 @@ The pre - authorization cancellation is used to reverse a pre-authorization comp
     "orderId": "IPAY2020099",
     "txnAmt": 1590,
     "txnTime": "20200116142526",
-    "serialno": "212001161420212126498"
+    "serialno": "212001161420212126498",
+   	"currency": "156"
+
 }
 ```
 
