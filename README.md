@@ -20,10 +20,11 @@ The following configuration is required prior to making request and is set in th
 
 | Attribute | Value |Comments|
 | --------- | ------ | ---------|
+| LOGDIR | request_logs | Folder that will have the log files|
 | UPOP.CERTID| `69629715588` | The certificate ID that is used. It is preferable to have this as an environment variable |
 | UPOP.SMSCODE | 111111 | SMS code is used in combination with account number in the absence of CVV, card expiry and phone number |
 | UPOP.SIGNCERT.PWD|000000| The password required to use private key |
-|
+
 
 # Production Certificates
 These certificates are located in the folder
@@ -55,7 +56,7 @@ A request is made by intiating the Unionpay class and passing the json string to
 | card| Credit card number | String | M |
 | orderId| Order id that is unique | String |  M |
 | txnAmt| Transaction amount in cents| Numeric |  M |
-|serialno| The queryId retrieved from the backend response | M | 
+|serialno| The queryId retrieved from the backend response |String| M | 
 | txnTime| Time when transaction is taking place | String | M |
 | smsCode| SMS code sent to customer phone | String | C |
 | cvn | card verification number | String | C |
@@ -206,6 +207,37 @@ A json response is returned to the front end as follows
 
 }
 ````
+# Union Pay Response Codes
+The General response code range and their description is given below
+
+| Response code   | Description |
+| --------------- | --------------- | 
+|00	| Success |
+|01-09 | Error due to UPOP system |
+|10-29 | Error related to merchant submitted message format checking |
+|30-59 | Error related to merchant/acquirer related business checking |
+|60-89 | Error related to cardholder or issuer (channel) related problems |
+|90-99 | Reserved |
+
+These specific response code appear in the json response with attribute `respCode` that you receive 
+
+| Response code   | Description |
+| --------------- | --------------- | 
+| 00 | Success |
+| A6 | Partial success |
+| 01 | Transaction failed. For details please inquire overseas service hotline 1 . |
+| 02 | System is not started or temporarily down, please try again later  |
+| 03 | Transaction communication time out, please initiate inquiry transaction |
+| 05 | Transaction has been accepted, please inquire about transaction result shortly |
+| 06 | System is busy, please retry it later. |
+| 10 | Message format error |
+| 11 | Verify signature error |
+| 12 | Repeat transaction |
+| 13 | Message transaction key element missing |
+| 30 | Transaction failed, please try using other UnionPay card for payment or contact |
+| 31 | Merchant state incorrect. The payment is not completed within the order timeout |
+| 32 | No such transaction right |
+| 33 | Transaction amount exceeds limit |
 
 
 Also, another response is forwarded to the callback URL provided when making a transaction request. The response is shown below
