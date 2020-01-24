@@ -31,10 +31,10 @@ class UnionPay{
 	
 	
 	//certificates
-	const SIGNCERTPATH="certs/test/acp_test_sign.pfx";
-	const ENCRYPTCERTPATH="certs/test/acp_test_enc.cer";
-	const ROOTCERTPATH="certs/test/acp_test_root.cer";
-	const MIDDLECERTPATH="certs/test/acp_test_middle.cer";
+	const SIGNCERTPATH="certs/prod/acp_prod_sign.pfx";
+	const ENCRYPTCERTPATH="certs/prod/acp_prod_enc.cer";
+	const ROOTCERTPATH="certs/prod/acp_prod_root.cer";
+	const MIDDLECERTPATH="certs/cert/acp_prod_middle.cer";
 	//URLS
 	//const BACKURL="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php";
 	const BACKTRANSURL = "https://gateway.test.95516.com/gateway/api/backTransReq.do";
@@ -998,5 +998,9 @@ class UnionPay{
 	}
 	
 }
+$unionpay = new UnionPay(); //instantiate unionpay class
 
+$dataRecd = file_get_contents('php://input');//get json string
+
+$unionpay->makeRequest($dataRecd); //call function with reques
 ?>
