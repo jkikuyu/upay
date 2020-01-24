@@ -1,17 +1,5 @@
 # UnionPay API
 [TOC]
-## introduction
-
-[Overview](#overview)
-
-[Setup](#-Setup)
-
-[Configuration](#-Configuration)
-
-[Production Certificates](#-Production-Certificates)
-
-[The base URL](#-The-base-URL)
-
 
 ## Introduction
 
@@ -23,7 +11,7 @@ The UnionPay.php file has the unionpay class that will be used to make request a
 
 ![Union Pay Process Flow](images/upflow.png)
 
-## <a name="setup"></a>Setup 
+## Setup 
 In order to setup the packages run
 
 ~~~
