@@ -1,14 +1,18 @@
 # UnionPay API
-# Introduction
+
+[Overview](#Overview)
+
+## Introduction
 
 The API will receive union pay credit card transaction requests and return appropriate responses. Requests shall be for purchase, purchase cancellation, transaction query, pre-authorization, pre-authorization complete and pre authorization complete cancellation. 
 
-# Overview
+##Overview
 
 The UnionPay.php file has the unionpay class that will be used to make request and receive responses from Unionpay. The series of events from initiating the request and receiving a response is depicted in the follow diagram.
+
 ![Union Pay Process Flow](images/upflow.png)
 
-# Setup 
+## Setup 
 In order to setup the packages run
 
 ~~~
@@ -16,7 +20,7 @@ composer install
 ~~~
 
 
-# Configuration 
+## Configuration 
 The following configuration is required prior to making request and is set in the .ENV file
 
 | Attribute | Value |Comments|
@@ -27,16 +31,16 @@ The following configuration is required prior to making request and is set in th
 | UPOP.SIGNCERT.PWD|000000| The password required to use private key |
 
 
-# Production Certificates
+## Production Certificates
 These certificates are located in the folder
 ~~~
 unionpay/certs
 ~~~
-# The base URL shall be as shown 
+## The base URL shall be as shown 
 ~~~~
 /unionpay
 ~~~~
-# Making a request
+## Making a request
 A request is made by intiating the Unionpay class and passing the json string to the `makeRequest` function
 ```php
 <?php
@@ -46,7 +50,7 @@ A request is made by intiating the Unionpay class and passing the json string to
 ?>
 ```
 
-# Headers
+## Headers
 
 ** Content-Type :** application/json
 
@@ -64,7 +68,7 @@ A request is made by intiating the Unionpay class and passing the json string to
 | expiry | Card expiry YYMM | String | C |
 | phoneno |Customer phone number used  | String | C |
 
-# POST Purchase
+## POST Purchase
 A purchase request 
 #### Request
 ```json
@@ -82,7 +86,7 @@ A purchase request
 ```
 
 
-# POST Query 
+## POST Query 
 The query request is shown below
 ```json
 {
@@ -92,7 +96,7 @@ The query request is shown below
 }
 ```
 
-# POST Purchase Cancellation
+## POST Purchase Cancellation
 A purchase cancellation request is used to reverse the purchase transaction. The amount is fully or partially reversed as follows
 ```json
 {
@@ -104,7 +108,7 @@ A purchase cancellation request is used to reverse the purchase transaction. The
 }
 ```
 
-# POST Pre-Authorization
+## POST Pre-Authorization
 The pre authorization request is shown below
 ```json
 {
@@ -119,7 +123,7 @@ The pre authorization request is shown below
  	"currency": "156"
 }
 ```
-# POST Pre-Authorization Cancellation
+## POST Pre-Authorization Cancellation
 
 The pre authorization cancellation request is used to reverse the Pre authorization. The amount is fully or partially reversed as follows as follows
 ```json
@@ -133,7 +137,7 @@ The pre authorization cancellation request is used to reverse the Pre authorizat
 
 }
 ```
-# POST Pre-Authorization Complete
+## POST Pre-Authorization Complete
 ```json
 {
     "type": 6,
@@ -145,7 +149,7 @@ The pre authorization cancellation request is used to reverse the Pre authorizat
 
 }
 ```
-# POST Pre-Authorization Complete Cancellation
+## POST Pre-Authorization Complete Cancellation
 The pre - authorization cancellation is used to reverse a pre-authorization complete transaction. The amount is fully or partially reversed
 ```json
 {
@@ -184,7 +188,7 @@ The following types are used to determine the transaction processing operation t
 | description| Response description | 
 | queryId| Query idenfier used to search transaction |  
 | respCode| Specific union pay response code  | 
-#### Successful Responses
+#### <a name="pookie"></a> Successful Responses
 
 A json response is returned to the front end as follows
 
@@ -218,7 +222,7 @@ In this case the transaction failed to get processed on the ipay or unionpay gat
 
 }
 ```
-# Union Pay Response Codes
+## Union Pay Response Codes
 The General response code range and their description is given below
 
 | Response code   | Description |
