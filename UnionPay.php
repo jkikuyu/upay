@@ -117,7 +117,8 @@ class UnionPay{
 	*/
 
 		error_reporting(E_ALL);
-		ini_set('display_errors', TRUE);
+		ini_set('display_errors', TRUE);!1stIn920
+			
 
 		ini_set('display_startup_errors', TRUE);
 		// load the dotenv file
