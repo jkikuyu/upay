@@ -1,5 +1,6 @@
 # UnionPay API
-[Introduction](#introduction)
+[TOC]
+## introduction
 
 [Overview](#overview)
 
@@ -12,11 +13,11 @@
 [The base URL](#-The-base-URL)
 
 
-## <a name="introduction"></a>Introduction
+## Introduction
 
 The API will receive union pay credit card transaction requests and return appropriate responses. Requests shall be for purchase, purchase cancellation, transaction query, pre-authorization, pre-authorization complete and pre authorization complete cancellation. 
 
-## <a name="overview"></a>Overview
+## Overview
 
 The UnionPay.php file has the unionpay class that will be used to make request and receive responses from Unionpay. The series of events from initiating the request and receiving a response is depicted in the follow diagram.
 
