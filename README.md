@@ -1,7 +1,7 @@
 # UnionPay API
-[Introduction](#-Introduction)
+[Introduction](#introduction)
 
-[Overview](#-Overview)
+[Overview](#overview)
 
 [Setup](#-Setup)
 
@@ -12,17 +12,17 @@
 [The base URL](#-The-base-URL)
 
 
-## Introduction
+## <a name="introduction"></a>Introduction
 
 The API will receive union pay credit card transaction requests and return appropriate responses. Requests shall be for purchase, purchase cancellation, transaction query, pre-authorization, pre-authorization complete and pre authorization complete cancellation. 
 
-## Overview
+## <a name="overview"></a>Overview
 
 The UnionPay.php file has the unionpay class that will be used to make request and receive responses from Unionpay. The series of events from initiating the request and receiving a response is depicted in the follow diagram.
 
 ![Union Pay Process Flow](images/upflow.png)
 
-## Setup 
+## <a name="setup"></a>Setup 
 In order to setup the packages run
 
 ~~~
