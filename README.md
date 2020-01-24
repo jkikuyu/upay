@@ -1,12 +1,17 @@
 # UnionPay API
-
+[Introduction](#Introduction)
 [Overview](#Overview)
+[Setup](#Setup)
+[Configuration](#Configuration)
+[Production Certificates](#Production-Certificates)
+[The base URL shall be as shown](#The-base-URL)
+
 
 ## Introduction
 
 The API will receive union pay credit card transaction requests and return appropriate responses. Requests shall be for purchase, purchase cancellation, transaction query, pre-authorization, pre-authorization complete and pre authorization complete cancellation. 
 
-##Overview
+## Overview
 
 The UnionPay.php file has the unionpay class that will be used to make request and receive responses from Unionpay. The series of events from initiating the request and receiving a response is depicted in the follow diagram.
 
@@ -34,9 +39,9 @@ The following configuration is required prior to making request and is set in th
 ## Production Certificates
 These certificates are located in the folder
 ~~~
-unionpay/certs
+unionpay/certs/prod
 ~~~
-## The base URL shall be as shown 
+## The base URL
 ~~~~
 /unionpay
 ~~~~
