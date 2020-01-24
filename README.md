@@ -5,7 +5,8 @@ The API will receive union pay credit card transaction requests and return appro
 
 # Overview
 
-The UnionPay.php file consists of two parts. A Class UnionPay and and entry point that sets the environment and instantiates the class
+The UnionPay.php file has the unionpay class that will be used to make request and receive responses from Unionpay. The series of events from initiating the request and receiving a response is depicted in the follow diagram.
+![Union Pay Process Flow](image/upflow.png)
 
 # Setup 
 In order to setup the packages run
@@ -40,8 +41,8 @@ A request is made by intiating the Unionpay class and passing the json string to
 ```php
 <?php
 	$unionpay = new UnionPay(); //instantiate unionpay class
-	$dataRecd = file_get_contents('php://input');//get json string
-	$unionpay->makeRequest($dataRecd); //call function with request
+	$json = file_get_contents('php://input');//get json string
+	$unionpay->makeRequest($json); //call function with request
 ?>
 ```
 
@@ -198,12 +199,22 @@ A json response is returned to the front end as follows
 }
 ```
 #### Failed responses
+This is a successful response to the unionpay gateway that has business requirement that is unfulfilled
 ```
 {
 "status":"200",
 "description":"OK",
 "queryId":"042001161417022386518",
 "respCode":"35"
+
+}
+```
+In this case the transaction failed to get processed on the ipay or unionpay gateway
+```
+{
+"status":"400",
+"description":"failed",
+"respCode":"12"
 
 }
 ```
