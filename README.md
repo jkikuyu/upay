@@ -49,11 +49,11 @@ A request is made by intiating the Unionpay class and passing the json string to
 ?>
 ```
 
-## Headers
+### Headers
 
 ** Content-Type :** application/json
 
-##### Attributes and their descriptions
+### Attributes and their descriptions
 | attribute | Description |Type | Requirement |
 | --------------- | --------------- | --------------- |
 | type| Transaction Type | Numeric | M |
@@ -69,7 +69,7 @@ A request is made by intiating the Unionpay class and passing the json string to
 
 ## POST Purchase
 A purchase request 
-#### Request
+
 ```json
 {
     "type": 1,
@@ -162,7 +162,7 @@ The pre - authorization cancellation is used to reverse a pre-authorization comp
 }
 ```
 
-### Transaction Types
+## Transaction Types
 The following types are used to determine the transaction processing operation to be carried out
 
 |Type|Description|
@@ -177,9 +177,9 @@ The following types are used to determine the transaction processing operation t
 | 8 | RECURRING |
 | 9 | QUERY |
 
-#### Response (application/json)
+## Response (application/json)
 
-#### Attributes and their descriptions
+### Attributes and their descriptions
  
 | attribute | Description |
 | --------------- | --------------- | 
@@ -187,7 +187,7 @@ The following types are used to determine the transaction processing operation t
 | description| Response description | 
 | queryId| Query idenfier used to search transaction |  
 | respCode| Specific union pay response code  | 
-#### <a name="pookie"></a> Successful Responses
+### Successful Responses
 
 A json response is returned to the front end as follows
 
@@ -201,7 +201,7 @@ A json response is returned to the front end as follows
 >
 }
 ```
-#### Failed responses
+### Failed responses
 This is a successful response to the unionpay gateway that has business requirement that is unfulfilled
 ```
 {
