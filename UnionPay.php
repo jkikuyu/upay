@@ -31,10 +31,10 @@ class UnionPay{
 	
 	
 	//certificates
-	const SIGNCERTPATH="certs/prod/acp_prod_sign.pfx";
-	const ENCRYPTCERTPATH="certs/prod/acp_prod_enc.cer";
-	const ROOTCERTPATH="certs/prod/acp_prod_root.cer";
-	const MIDDLECERTPATH="certs/cert/acp_prod_middle.cer";
+	const SIGNCERTPATH="certs/test/acp_test_sign.pfx";
+	const ENCRYPTCERTPATH="certs/test/acp_test_enc.cer";
+	const ROOTCERTPATH="certs/test/acp_test_root.cer";
+	const MIDDLECERTPATH="certs/test/acp_test_middle.cer";
 	//URLS
 	//const BACKURL="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php";
 	const BACKTRANSURL = "https://gateway.test.95516.com/gateway/api/backTransReq.do";
@@ -45,11 +45,14 @@ class UnionPay{
 	private $encoding ="UTF-8";
 	private $signMethod="01";
 	private $bizType = "000000";
+	private $smscode = "111111";
 	private $accessType ="0";
 	private $channelType ="08";
 	private $merId="000000070000017";
-	private $port=443;
-    protected $signCertType= "PKCS12";
+	private $port="443";
+	private $pwd= "000000";
+    private $signCertType= "PKCS12";
+	
 
 	/*identifier of certificate used for encryption of data */
     private $certId;
@@ -117,7 +120,7 @@ class UnionPay{
 	*/
 
 		error_reporting(E_ALL);
-		ini_set('display_errors', TRUE);!1stIn920
+		ini_set('display_errors', TRUE);
 			
 
 		ini_set('display_startup_errors', TRUE);
@@ -125,9 +128,11 @@ class UnionPay{
 		$dotenv = Dotenv::createImmutable(__DIR__);
 		$dotenv->load();
 		$this->getLogFile("UPOP");
+/*
 		$this->smsCode=getenv('UPOP.SMSCODE');
 		$this->certId = getenv('UPOP.CERTID');
         $this->signCertPwd=getenv('UPOP.SIGNCERT.PWD');
+*/
 
 
 
@@ -311,7 +316,9 @@ class UnionPay{
 		$encryptCert= self::getEncryptCertPath();
 		
 		$data=openssl_x509_parse($encryptCert,true);
+		print_r($data);
 		$serialNo = $data['serialNumber'];
+		openssl_x509_free($data);
 	return $serialNo;
 	}
 	private function getEncryptCertPath(){
@@ -526,8 +533,7 @@ class UnionPay{
             "signMethod" =>$this->signMethod, 
             "bizType"=>$this->bizType,
             "accessType"=>$this->accessType,
-            "merId"=>$this->merId,
-            "certId" => $this->certId,
+            "merId"=>$this->merId
         );
     
         return $content;
@@ -652,6 +658,7 @@ class UnionPay{
 							$txntype="01";
 							$txnSubType="01";
 							$encryptedCertId = $this->encryptedCertId();
+							echo "cert Id " .$encryptedCertId;
 							$combined=[];
 							$requiredUserData = ['card','cvn','expiry','phoneno','txnAmt','txnTime',"currency","orderId"];
 							$isValid = $this->validateRequest($json,$requiredUserData);
@@ -662,10 +669,10 @@ class UnionPay{
 
 								}
 								else{
+									$requiredUserData = ["smsCode"];
+									$this->validateRequest($json,$requiredUserData);
 
 									if($json->expiry==="" && $json->cvn==="" && $json->phoneno==="" && $json->card){
-											$requiredUserData = ["smsCode"];
-											$this->validateRequest($json,$requiredUserData);
 
 											if ($json->smsCode===""){
 												$this->log->error("Please provide card details");
