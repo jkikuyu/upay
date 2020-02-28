@@ -31,14 +31,14 @@ class UnionPay{
 	
 	
 	//certificates
-	const SIGNCERTPATH="certs/test/acp_test_sign.pfx";
-	const ENCRYPTCERTPATH="certs/test/acp_test_enc.cer";
-	const ROOTCERTPATH="certs/test/acp_test_root.cer";
-	const MIDDLECERTPATH="certs/test/acp_test_middle.cer";
+	const SIGNCERTPATH="certs/prod/acp_test_sign.pfx";
+	const ENCRYPTCERTPATH="certs/prod/acp_test_enc.cer";
+	const ROOTCERTPATH="certs/prod/acp_test_root.cer";
+	const MIDDLECERTPATH="certs/prod/acp_test_middle.cer";
 	//URLS
 	//const BACKURL="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php";
-	const BACKTRANSURL = "https://gateway.test.95516.com/gateway/api/backTransReq.do";
-	const SINGLEQUERYURL="https://gateway.test.95516.com/gateway/api/queryTrans.do";
+	const BACKTRANSURL = "https://gateway.95516.com/gateway/api/backTransReq.do";
+	const SINGLEQUERYURL="https://gateway.95516.com/gateway/api/queryTrans.do";
 	private $backUrl="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/backRcvResponse.php";
 	private $frontUrl="https://ipay-staging.ipayafrica.com/upop/unionpaycbk/frontRcvResponse.php";
 	private $version="5.1.0";
