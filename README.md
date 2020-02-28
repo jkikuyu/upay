@@ -26,8 +26,6 @@ The following configuration is required prior to making request and is set in th
 | --------- | ------ | ---------|
 | LOGDIR | request_logs | Folder that will have the log files|
 | UPOP.CERTID| `69629715588` | The certificate ID that is used. It is preferable to have this as an environment variable |
-| UPOP.SMSCODE | 111111 | SMS code is used in combination with account number in the absence of CVV, card expiry and phone number |
-| UPOP.SIGNCERT.PWD|000000| The password required to use private key |
 
 
 ## Production Certificates
