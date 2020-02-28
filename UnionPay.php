@@ -45,12 +45,12 @@ class UnionPay{
 	private $encoding ="UTF-8";
 	private $signMethod="01";
 	private $bizType = "000000";
-	private $smscode = "111111";
+	private $smsCode = "111111";
 	private $accessType ="0";
 	private $channelType ="08";
 	private $merId="000000070000017";
 	private $port="443";
-	private $pwd= "000000";
+	private $signCertPwd= "000000";
     private $signCertType= "PKCS12";
 	
 
@@ -75,7 +75,7 @@ class UnionPay{
 	 /** Path of signed certificate. */
     //protected $signCertPath;
     /** Password of signed certificate. */
-    protected $signCertPwd;
+    //protected $signCertPwd;
     /** Type of signed certificate. */
     /** Path of encrypted public key certificate. */
     //public $encryptCertPath;
@@ -128,9 +128,10 @@ class UnionPay{
 		$dotenv = Dotenv::createImmutable(__DIR__);
 		$dotenv->load();
 		$this->getLogFile("UPOP");
+		$this->certId = getenv('UPOP.CERTID');
+
 /*
 		$this->smsCode=getenv('UPOP.SMSCODE');
-		$this->certId = getenv('UPOP.CERTID');
         $this->signCertPwd=getenv('UPOP.SIGNCERT.PWD');
 */
 
@@ -145,10 +146,12 @@ class UnionPay{
 			$strData = self::convertToString($merged_data);
 
 			$pkey = self::$keystore['pkey'];
+			$p = openssl_pkey_get_details($pkey);
+			print_r($p);
 			$signedData = self::generateSignature($pkey, $strData);
-			
 		}
 		else
+
 			$this->log->error("unable to read file");
 
 			
@@ -165,8 +168,12 @@ class UnionPay{
         if ($this->signCertType =='PKCS12'){
 			try{
 				if ($cert_store = file_get_contents(self::SIGNCERTPATH)) {
-
+						$data=openssl_x509_parse($cert_store,true);
+						echo "data:::::::::";
+						print_r(array_values($data));
+						echo "data:::::::::";
 						if (openssl_pkcs12_read($cert_store, self::$keystore, $this->signCertPwd)){
+							
 						   $this->log->info("Signed Certicate loaded Successfully");
 							$success=true;
 						}
@@ -202,7 +209,6 @@ class UnionPay{
 		$signature = self::signData($enc, $privateKey);
 		
 		$b64 = base64_encode($signature);
-
     return $b64;
 	}
 	private function generateHash($utf8){
@@ -316,9 +322,7 @@ class UnionPay{
 		$encryptCert= self::getEncryptCertPath();
 		
 		$data=openssl_x509_parse($encryptCert,true);
-		print_r($data);
 		$serialNo = $data['serialNumber'];
-		openssl_x509_free($data);
 	return $serialNo;
 	}
 	private function getEncryptCertPath(){
@@ -409,7 +413,6 @@ class UnionPay{
 
 		unset($ares['signature']);
 		//echo "<br />";
-		//print_r($ares);
 		$pubKeyStr=  $ares["signPubKeyCert"];
 		$strData = self::convertToString($ares);
 		$strDataEnc = self::generateHash($strData);
@@ -442,9 +445,11 @@ class UnionPay{
 	*/
 	$oData = (object) $merged_data; //make object for validation 
 	$isValid = self::isRequestValid($oData,$requiredData);
-
 	if ($isValid){
+				echo "keystore XXXXXXXXXXXXXX";
+
 		$signature	= self::getSignature($merged_data);
+		echo "signature" . $signature;
 	}
 	else{
 		return $isValid;
@@ -456,7 +461,6 @@ class UnionPay{
 	private function convertToString($merged_final=null){
         $strData = null;
         ksort($merged_final);
-		//print_r($recd);
 
             foreach($merged_final as $key => $value) {
                 $strData.= $key."=".$value."&";
@@ -577,8 +581,7 @@ class UnionPay{
             'accessType',
             'merId',
             'orderId',
-            'txnTime',
-            'certId'
+            'txnTime'
         ];
         return $required_data;
     }
@@ -658,7 +661,9 @@ class UnionPay{
 							$txntype="01";
 							$txnSubType="01";
 							$encryptedCertId = $this->encryptedCertId();
-							echo "cert Id " .$encryptedCertId;
+
+							//echo "cert Id " .$encryptedCertId;
+							
 							$combined=[];
 							$requiredUserData = ['card','cvn','expiry','phoneno','txnAmt','txnTime',"currency","orderId"];
 							$isValid = $this->validateRequest($json,$requiredUserData);
@@ -669,30 +674,29 @@ class UnionPay{
 
 								}
 								else{
-									$requiredUserData = ["smsCode"];
+									//$requiredUserData = ["smsCode"];
 									$this->validateRequest($json,$requiredUserData);
-
 									if($json->expiry==="" && $json->cvn==="" && $json->phoneno==="" && $json->card){
 
-											if ($json->smsCode===""){
-												$this->log->error("Please provide card details");
+										if ($json->smsCode===""){
+											$this->log->error("Please provide card details");
 
-												throw new \Exception("Error, contact system administrator");
+											throw new \Exception("Error, contact system administrator");
 
-											}
-											else{
-												$customerInfo =["smsCode"=>  $this->smsCode];
-											}
 										}
 										else{
-
-											$cardDetails ="expired=".$json->expiry."&cvn2=". $json->cvn. "&phoneNo=". $json->phoneno;
-											// card details such as expiry month, year and cvv encrypted seperately from card number 
-											$encryptedInfo = $this->encryptCardData($cardDetails);
-											$encryptedCard = $this->encryptCardData($json->card);
-											//incase of presence of SMS code functionality it is combined with encrypted card details
-											$customerInfo = ["smsCode"=>  $this->smsCode, "encryptedInfo"=>$encryptedInfo];
+											$customerInfo =["smsCode"=>  $this->smsCode];
 										}
+									}
+									else{
+
+										$cardDetails ="expired=".$json->expiry."&cvn2=". $json->cvn. "&phoneNo=". $json->phoneno;
+										// card details such as expiry month, year and cvv encrypted seperately from card number 
+										$encryptedInfo = $this->encryptCardData($cardDetails);
+										$encryptedCard = $this->encryptCardData($json->card);
+										//incase of presence of SMS code functionality it is combined with encrypted card details
+										$customerInfo = ["smsCode"=>  $this->smsCode, "encryptedInfo"=>$encryptedInfo];
+									}
 									$encryptedCustomerInfo =  $this->encryptCustomerInfo($customerInfo,$json->card);
 									$customerData = ["accNo"=>$encryptedCard, "encryptCertId"=>$encryptedCertId,"customerInfo"=>$encryptedCustomerInfo,"txnAmt"=> $json->txnAmt,"currencyCode"=>$json->currency];
 									$purchaseContent = $this->getPurchaseContent();
@@ -878,7 +882,6 @@ class UnionPay{
 
 					}
 					$defaultContent = $this->getDefaultContent();
-					//print_r($defaultContent);
 
 
 					$defaultContent=array_merge($defaultContent,(array)$combined);
@@ -897,8 +900,9 @@ class UnionPay{
 
 
 					//$certID = $upopconf->certid;
-					//$certDetail = ["signature"=>$signature,"certId"=>$certID];
-					$certDetail = ["signature"=>$signature];
+					//print_r(self::$keystore);
+					$certDetail = ["signature"=>$signature,"certId"=>$this->certId];
+					//$certDetail = ["signature"=>$signature];
 					$merged_final= array_merge($merged,$certDetail);
 
 					// $sorted = ksort($merged_final);
@@ -908,6 +912,7 @@ class UnionPay{
 					$data = $this->initiateRequest($merged_final,$url,$port);
 					
 					if(strlen($data) < 1 || strtoupper($data)==="INVALID REQUEST."){
+						echo "YYYYYYYYYYYYYYYYYYY";
 						$this->log->error( $data . " Request URL is missing");
 
 						throw new \Exception('Error, contact system administrator');
@@ -938,7 +943,6 @@ class UnionPay{
 					   }
 					}
 					$respCode = $resp['respCode'] ;
-					//print_r($resp);
 					$validCert = $this->isPubKeyCertValid($pubcertStr);
 					if ($validCert){
 
