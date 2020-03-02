@@ -10,11 +10,11 @@
 	"require": {
         "monolog/monolog": "^1.25",
         "vlucas/phpdotenv": "^4.1",
-		"up/unionpay" : "dev-master"
+		"ipay/upi" : "dev-master"
 	},
 	"repositories": [{
 		"type" : "git",
-		"url" : "https://jkikuyu@bitbucket.org/ipayafrica/unionpay.git"
+		"url" : "https://jkikuyu@bitbucket.org/ipayafrica/upi.git"
 	}],
 	"autoload": {
 	"psr-4": {"Unionpay\\": "unionpay"}
